@@ -1,155 +1,224 @@
-import React from 'react';
-import { Phone, Mail, MapPin, Calendar, Clock, Clipboard, FileText, Plus, Search, Filter } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+    Printer,
+    FileText,
+    Plus,
+    Edit2,
+    UserPlus,
+    AlertCircle,
+    Upload,
+    Image as ImageIcon,
+    DollarSign,
+    Clock,
+    Users,
+    Microscope
+} from 'lucide-react';
 
 const Patients: React.FC = () => {
+    const [activeSubTab, setActiveSubTab] = useState('Timeline');
+
     return (
-        <div className="p-8 space-y-8 animate-in fade-in zoom-in-95 duration-500">
-            <header className="flex justify-between items-center">
-                <div>
-                    <h2 className="text-3xl font-bold">Patient Management</h2>
-                    <p className="text-slate-500 font-medium">Manage patient records, history and treatments.</p>
+        <div className="p-8 h-full space-y-8 animate-in fade-in duration-500">
+            {/* Top Header - Patient Management Header */}
+            <header className="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[#137fec] rounded-xl flex items-center justify-center text-white shadow-lg">
+                        <Users size={24} className="text-white" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black italic tracking-tighter text-slate-800">Panel de Pacientes</h2>
+                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Gestión Clínica Avanzada</p>
+                    </div>
                 </div>
                 <div className="flex gap-4">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Filter patients..."
-                            className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-primary outline-none text-sm transition-all"
-                        />
-                    </div>
-                    <button className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-500 hover:text-primary transition-all">
-                        <Filter size={20} />
+                    <ActionButton icon={<Printer size={16} />} label="Imprimir Historia" />
+                    <ActionButton icon={<FileText size={16} />} label="Nueva Receta" />
+                    <button className="bg-[#137fec] hover:bg-blue-600 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2 active:scale-95">
+                        <Plus size={18} />
+                        Nuevo Tratamiento
                     </button>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* Patient Profile Card (Detailed view of selected patient) */}
-                <div className="xl:col-span-1 space-y-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm sticky top-8">
-                        <div className="bg-gradient-to-r from-primary to-blue-600 h-32 relative">
-                            <div className="absolute -bottom-12 left-8">
-                                <div className="w-24 h-24 rounded-3xl bg-white p-1 shadow-xl">
-                                    <div className="w-full h-full rounded-2xl bg-slate-100 flex items-center justify-center text-primary overflow-hidden">
-                                        <img src="https://ui-avatars.com/api/?name=Maria+Garcia&background=0D8ABC&color=fff&size=128" alt="Maria Garcia" />
+            {/* Patient Profile Card (Profile Info Area) */}
+            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200/60 shadow-sm flex flex-col md:flex-row items-center gap-10">
+                <div className="relative">
+                    <div className="w-24 h-24 rounded-full border-4 border-slate-50 overflow-hidden shadow-xl ring-2 ring-blue-100">
+                        <img src="https://ui-avatars.com/api/?name=Maria+Garcia&background=137fec&color=fff&size=128" alt="Maria" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 rounded-full border-4 border-white"></div>
+                </div>
+
+                <div className="flex-1 space-y-4 text-center md:text-left">
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        <h3 className="text-3xl font-black italic tracking-tighter text-slate-800">Maria Garcia</h3>
+                        <span className="px-4 py-1.5 bg-red-50 text-red-600 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 border border-red-100">
+                            <AlertCircle size={12} /> Alergia: Penicilina
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                        <ProfileStat label="EDAD" value="34 Años" />
+                        <ProfileStat label="GRUPO SANGUÍNEO" value="O+" />
+                        <ProfileStat label="ÚLTIMA VISITA" value="15 Ene, 2026" />
+                        <ProfileStat label="ID PACIENTE" value="#DP-99283" color="text-[#137fec]" />
+                    </div>
+                </div>
+
+                <div className="flex gap-3">
+                    <button className="p-3 bg-slate-50 rounded-xl text-slate-400 hover:text-[#137fec] transition-colors"><Edit2 size={18} /></button>
+                    <button className="p-3 bg-slate-50 rounded-xl text-slate-400 hover:text-[#137fec] transition-colors"><UserPlus size={18} /></button>
+                </div>
+            </div>
+
+            {/* Sub-navigation Tabs */}
+            <div className="border-b border-slate-200">
+                <nav className="flex gap-10">
+                    {['Timeline', 'Odontograma', 'Periodontograma', 'Documentos', 'Presupuesto'].map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveSubTab(tab)}
+                            className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeSubTab === tab ? 'text-[#137fec]' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            {tab}
+                            {activeSubTab === tab && <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#137fec] rounded-full"></div>}
+                        </button>
+                    ))}
+                </nav>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+
+                {/* Left Column: Timeline */}
+                <div className="xl:col-span-8 space-y-8">
+                    <div className="relative pl-8 space-y-8 before:absolute before:left-0 before:top-4 before:bottom-0 before:w-[2px] before:bg-slate-100 italic">
+
+                        <div className="relative">
+                            <div className="absolute -left-10 top-2 w-4 h-4 rounded-full bg-[#137fec] border-4 border-white shadow-[0_0_0_2px_rgba(19,127,236,0.1)] z-10"></div>
+                            <div className="bg-white rounded-[2rem] border border-slate-200/60 p-8 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <span className="text-[10px] font-black text-[#137fec] uppercase tracking-widest">15 DE ENERO, 2026</span>
+                                        <h4 className="text-xl font-black italic tracking-tight text-slate-800 mt-1">Conducto Radicular - Etapa 1</h4>
+                                        <p className="text-slate-500 text-[11px] font-medium mt-1">Atendido por <span className="text-slate-800 font-bold">Dr. Lucas Román</span></p>
+                                    </div>
+                                    <span className="px-3 py-1 bg-blue-50 text-[#137fec] rounded-lg text-[9px] font-black uppercase tracking-widest">En Curso</span>
+                                </div>
+
+                                <div className="bg-slate-50/50 rounded-2xl p-6 mt-6 border border-slate-100">
+                                    <h5 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">NOTAS CLÍNICAS</h5>
+                                    <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                                        Paciente con dolor agudo en pieza #46. Rayos X mostraron caries profunda llegando a pulpa. Se administró anestesia local. Pulpectomía realizada con éxito. Seguimiento la próxima semana.
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-8 mt-6 pt-6 border-t border-slate-50 text-slate-400">
+                                    <div className="flex items-center gap-2 text-[10px] font-bold">
+                                        <Microscope size={14} /> Pieza #46
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[10px] font-bold">
+                                        <Clock size={14} /> 45 min duración
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="pt-16 p-8 space-y-6">
-                            <div>
-                                <h3 className="text-2xl font-bold">Maria Garcia</h3>
-                                <p className="text-slate-500 text-sm font-medium">Patient since May 2022 • <span className="text-primary font-bold">VIP</span></p>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <InfoItem icon={<Phone size={14} />} label="Phone" value="+1 555-0123" />
-                                <InfoItem icon={<Mail size={14} />} label="Email" value="m.garcia@email.com" />
-                                <InfoItem icon={<Calendar size={14} />} label="Born" value="Jun 12, 1988" />
-                                <InfoItem icon={<MapPin size={14} />} label="City" value="New York, NY" />
-                            </div>
-
-                            <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
-                                <h4 className="font-bold text-sm uppercase tracking-widest text-slate-400 mb-4">Quick Actions</h4>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <QuickActionButton icon={<Plus size={16} />} label="New Note" />
-                                    <QuickActionButton icon={<FileText size={16} />} label="Reports" />
-                                    <QuickActionButton icon={<Clock size={16} />} label="History" />
-                                    <QuickActionButton icon={<Clipboard size={16} />} label="Docs" />
+                        <div className="relative">
+                            <div className="absolute -left-10 top-2 w-4 h-4 rounded-full bg-slate-200 border-4 border-white z-10"></div>
+                            <div className="bg-white rounded-[2rem] border border-slate-200/60 p-8 shadow-sm">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">12 DE DICIEMBRE, 2025</span>
+                                        <h4 className="text-xl font-black italic tracking-tight text-slate-800 mt-1">Limpieza de Rutina y Control</h4>
+                                        <p className="text-slate-500 text-[11px] font-medium mt-1">Atendido por <span className="text-slate-800 font-bold">Hig. Sara Mills</span></p>
+                                    </div>
+                                    <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest">Completado</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Treatment History & Future Sessions */}
-                <div className="xl:col-span-2 space-y-8">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-xl font-bold">Clinical History</h3>
-                            <button className="text-primary font-bold text-sm">+ Add Entry</button>
+                {/* Right Column: Imagery & Finance */}
+                <div className="xl:col-span-4 space-y-8">
+
+                    <div className="bg-white rounded-[2.5rem] border border-slate-200/60 p-8 shadow-sm space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-800">Imágenes y Rayos X</h4>
+                            <button className="text-[10px] font-black text-[#137fec] uppercase tracking-widest hover:underline">Ver Todo</button>
                         </div>
 
-                        <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100 dark:before:bg-slate-800">
-                            <HistoryEntry
-                                date="Feb 10, 2026"
-                                title="Periodontal Cleaning"
-                                desc="Deep scaling and root planing performed on lower left quadrant. Patient tolerated well."
-                                type="clinical"
-                            />
-                            <HistoryEntry
-                                date="Jan 15, 2026"
-                                title="Initial Consultation"
-                                desc="Comprehensive exam, X-rays taken. Identified 3 cavities in upper molars."
-                                type="exam"
-                            />
-                            <HistoryEntry
-                                date="Dec 20, 2025"
-                                title="Emergency Visit"
-                                desc="Pain in tooth 46. Root canal suggested. Prescribed antibiotics."
-                                type="urgent"
-                            />
+                        <div className="space-y-4">
+                            <div className="relative group rounded-3xl overflow-hidden aspect-[4/3] bg-slate-100 border border-slate-200">
+                                <img src="https://images.unsplash.com/photo-1579154235828-4519939b940b?auto=format&fit=crop&q=80&w=400" alt="X-Ray" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-5">
+                                    <p className="text-white text-xs font-black italic">Radiografía Panorámica</p>
+                                    <p className="text-white/70 text-[9px] font-bold">15 de Ene, 2026</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="aspect-square rounded-2xl overflow-hidden bg-slate-100">
+                                    <img src="https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&q=80&w=200" alt="Small X-Ray" className="w-full h-full object-cover opacity-80" />
+                                </div>
+                                <div className="aspect-square rounded-2xl overflow-hidden bg-emerald-900 flex items-center justify-center">
+                                    <ImageIcon size={32} className="text-emerald-400 opacity-40" />
+                                </div>
+                            </div>
+
+                            <button className="w-full py-6 border-2 border-dashed border-slate-100 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-200 transition-all group">
+                                <div className="p-3 bg-blue-50 rounded-2xl text-[#137fec] group-hover:scale-110 transition-transform">
+                                    <Upload size={20} />
+                                </div>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subir Nuevo Archivo</span>
+                            </button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <SummaryCard title="Ongoing Treatments" count={3} list={['Periodontal', 'Invisalign', 'Whitening']} color="bg-blue-500" />
-                        <SummaryCard title="Pending Appointments" count={1} list={['Crown Fitting - Feb 25']} color="bg-orange-500" />
+                    <div className="bg-[#137fec]/5 rounded-[2.5rem] border border-blue-100 p-8 shadow-sm space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-[#137fec] rounded-xl text-white">
+                                <DollarSign size={16} />
+                            </div>
+                            <h4 className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-800">Resumen Financiero</h4>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="font-medium text-slate-500">Balance Actual</span>
+                                <span className="font-black text-slate-800">$450.00</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="font-medium text-slate-500">Total Tratamiento</span>
+                                <span className="font-black text-slate-800">$1,200.00</span>
+                            </div>
+                            <div className="w-full bg-blue-100 h-2.5 rounded-full overflow-hidden">
+                                <div className="bg-[#137fec] h-full w-[40%] rounded-full shadow-sm shadow-blue-500/20"></div>
+                            </div>
+                            <button className="w-full py-4 bg-white border border-slate-200 rounded-2xl text-[#137fec] text-[10px] font-black uppercase tracking-widest hover:bg-white/50 transition-all active:scale-95 mt-4">
+                                Generar Factura
+                            </button>
+                        </div>
                     </div>
+
                 </div>
             </div>
         </div>
     );
 };
 
-const InfoItem: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
-    <div className="space-y-1">
-        <div className="flex items-center gap-1.5 text-slate-400">
-            {icon} <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
-        </div>
-        <p className="text-sm font-bold truncate">{value}</p>
-    </div>
-);
-
-const QuickActionButton: React.FC<{ icon: React.ReactNode; label: string }> = ({ icon, label }) => (
-    <button className="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-bold hover:bg-primary hover:text-white transition-all group">
-        <span className="text-slate-400 group-hover:text-white">{icon}</span>
-        {label}
+const ActionButton: React.FC<{ icon: React.ReactNode; label: string }> = ({ icon, label }) => (
+    <button className="px-6 py-3 bg-white border border-slate-200 rounded-2xl font-black uppercase tracking-widest text-[10px] text-slate-500 shadow-sm hover:shadow-md transition-all flex items-center gap-3 active:scale-95">
+        {icon} {label}
     </button>
 );
 
-const HistoryEntry: React.FC<{ date: string; title: string; desc: string; type: string }> = ({ date, title, desc, type }) => (
-    <div className="pl-10 relative group">
-        <div className={`absolute left-2.5 top-2 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-900 z-10 
-      ${type === 'clinical' ? 'bg-primary shadow-[0_0_8px_rgba(19,127,236,0.5)]' : ''}
-      ${type === 'exam' ? 'bg-emerald-500' : ''}
-      ${type === 'urgent' ? 'bg-red-500' : ''}
-    `}></div>
-        <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl group-hover:bg-white dark:group-hover:bg-slate-800 border border-transparent group-hover:border-slate-100 dark:group-hover:border-slate-700 transition-all cursor-pointer">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">{date}</span>
-            <h4 className="font-bold text-slate-900 dark:text-white mb-1">{title}</h4>
-            <p className="text-sm text-slate-500 font-medium leading-relaxed">{desc}</p>
-        </div>
+const ProfileStat: React.FC<{ label: string; value: string; color?: string }> = ({ label, value, color = "text-slate-800" }) => (
+    <div className="space-y-1">
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{label}</p>
+        <p className={`text-sm font-black italic tracking-tight ${color}`}>{value}</p>
     </div>
 );
 
-const SummaryCard: React.FC<{ title: string; count: number; list: string[]; color: string }> = ({ title, count, list, color }) => (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <div className="flex justify-between items-center mb-4">
-            <h4 className="font-bold text-sm uppercase tracking-widest text-slate-400">{title}</h4>
-            <span className={`px-2 py-0.5 ${color} text-white rounded-lg text-[10px] font-bold`}>{count}</span>
-        </div>
-        <ul className="space-y-3">
-            {list.map((item, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm font-bold">
-                    <ChevronRight size={14} className="text-slate-400" />
-                    {item}
-                </li>
-            ))}
-        </ul>
-    </div>
-);
-
-import { ChevronRight } from 'lucide-react';
 export default Patients;

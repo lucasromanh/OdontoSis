@@ -5,20 +5,55 @@
 @layer base {
   :root {
     --primary: 19, 127, 236;
-    --background: 246, 247, 248;
+    --background: 244, 244, 240;
   }
 }
 
+html,
 body {
+  height: 100vh;
+  width: 100vw;
   margin: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  padding: 0;
+  background-color: #F4F4F0;
+  overflow: hidden;
 }
 
-/* Custom Scrollbar */
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* 
+  Estrategia de escalado:
+  Escalamos el contenedor principal un 85% para que todo se vea más pequeño (como pidió el usuario).
+  Para que ocupe todo el espacio visual, el contenedor debe ser más grande que el 100%.
+  1 / 0.85 = ~1.1765
+*/
+.app-scale-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 117.65vw;
+  height: 117.65vh;
+  transform: scale(0.85);
+  transform-origin: top left;
+  background-color: #F4F4F0;
+  display: flex;
+  overflow: hidden;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1E293B;
+}
+
+/* Scrollbar Personalizado */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -28,37 +63,11 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.dark .glass {
-  background: rgba(16, 25, 34, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-clip: content-box;
 }

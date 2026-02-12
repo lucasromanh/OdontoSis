@@ -1,0 +1,6 @@
+﻿src/components/Appointments.tsx(6,5): error TS6133: 'Clock' is declared but its value is never read.
+src/components/Appointments.tsx(7,5): error TS6133: 'MoreVertical' is declared but its value is never read.
+src/components/Appointments.tsx(10,17): error TS6133: 'CalendarIcon' is declared but its value is never read.
+src/components/Appointments.tsx(11,5): error TS6133: 'Search' is declared but its value is never read.
+src/components/Appointments.tsx(12,5): error TS6133: 'ChevronDown' is declared but its value is never read.
+src/components/Appointments.tsx(13,5): error TS6133: 'User' is declared but its value is never read.

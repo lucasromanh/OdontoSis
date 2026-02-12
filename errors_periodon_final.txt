@@ -1,0 +1,2 @@
+﻿src/components/Periodontogram.tsx(8,5): error TS6133: 'AlertTriangle' is declared but its value is never read.
+src/components/Periodontogram.tsx(9,17): error TS6133: 'SettingsIcon' is declared but its value is never read.

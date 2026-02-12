@@ -1,86 +1,223 @@
 import React from 'react';
-import { Clock, ChevronLeft, ChevronRight, Plus, MapPin, MoreVertical } from 'lucide-react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    Plus,
+    ExternalLink,
+    CheckCircle2
+} from 'lucide-react';
 
 const Appointments: React.FC = () => {
     return (
-        <div className="p-8 h-full flex flex-col gap-8 animate-in slide-in-from-right-4 duration-500">
-            <header className="flex justify-between items-center">
-                <div className="flex items-center gap-6">
-                    <h2 className="text-3xl font-bold italic tracking-tight uppercase">Schedule</h2>
-                    <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <button className="p-1 hover:text-primary transition-colors"><ChevronLeft size={20} /></button>
-                        <span className="text-sm font-black px-4 uppercase tracking-widest">February 11 - 17, 2026</span>
-                        <button className="p-1 hover:text-primary transition-colors"><ChevronRight size={20} /></button>
-                    </div>
-                </div>
-                <div className="flex gap-4">
-                    <div className="flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-2xl">
-                        <button className="px-5 py-2 text-xs font-bold uppercase tracking-widest text-slate-500 rounded-xl hover:text-primary">Day</button>
-                        <button className="px-5 py-2 text-xs font-bold uppercase tracking-widest bg-white dark:bg-slate-900 text-primary rounded-xl shadow-sm">Week</button>
-                        <button className="px-5 py-2 text-xs font-bold uppercase tracking-widest text-slate-500 rounded-xl hover:text-primary">Month</button>
-                    </div>
-                    <button className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 active:scale-95">
-                        <Plus size={18} />
-                        Book appointment
-                    </button>
-                </div>
-            </header>
+        <div className="flex h-full bg-[#EBEBE6] animate-in fade-in duration-500 overflow-hidden">
 
-            <div className="flex-1 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex flex-col">
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-8 border-b border-slate-100 dark:border-slate-800">
-                    <div className="p-6 border-r border-slate-100 dark:border-slate-800 text-slate-400 font-bold text-[10px] uppercase tracking-widest flex items-end">Local Time</div>
-                    {['Mon 11', 'Tue 12', 'Wed 13', 'Thu 14', 'Fri 15', 'Sat 16', 'Sun 17'].map((day, i) => (
-                        <div key={i} className={`p-6 text-center border-r border-slate-100 dark:border-slate-800 last:border-0 ${i === 2 ? 'bg-primary/5' : ''}`}>
-                            <span className={`block text-xs font-black uppercase tracking-widest ${i === 2 ? 'text-primary' : 'text-slate-400'}`}>{day.split(' ')[0]}</span>
-                            <span className={`text-2xl font-black ${i === 2 ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>{day.split(' ')[1]}</span>
+            {/* Sidebar de la Agenda (Izquierda) - Más compacto */}
+            <aside className="w-64 border-r border-slate-200 bg-[#F4F4F0] flex flex-col overflow-y-auto custom-scrollbar shrink-0">
+
+                {/* Mini Calendario - Escala reducida */}
+                <div className="p-4 border-b border-slate-200">
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-xs font-black italic tracking-tight text-slate-800">Octubre 2023</h3>
+                        <div className="flex gap-1">
+                            <button className="p-1 hover:bg-white rounded text-slate-400"><ChevronLeft size={14} /></button>
+                            <button className="p-1 hover:bg-white rounded text-slate-400"><ChevronRight size={14} /></button>
                         </div>
-                    ))}
-                </div>
-
-                <div className="flex-1 overflow-y-auto">
-                    <div className="grid grid-cols-8 h-full">
-                        {/* Time labels */}
-                        <div className="col-span-1 border-r border-slate-100 dark:border-slate-800 divide-y divide-slate-50 dark:divide-slate-800">
-                            {[8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6].map(h => (
-                                <div key={h} className="h-24 p-4 text-right text-[10px] font-black text-slate-300 uppercase">{h}:00 {h > 7 && h < 12 ? 'AM' : 'PM'}</div>
-                            ))}
-                        </div>
-
-                        {/* Days columns */}
-                        {[...Array(7)].map((_, dayIdx) => (
-                            <div key={dayIdx} className={`col-span-1 border-r border-slate-100 dark:border-slate-800 relative divide-y divide-slate-50 dark:divide-slate-800 ${dayIdx === 2 ? 'bg-primary/[0.02]' : ''}`}>
-                                {[...Array(11)].map((_, i) => <div key={i} className="h-24"></div>)}
-
-                                {/* Mock Appointments */}
-                                {dayIdx === 0 && <AppointmentEntry top="h-24 mt-24" height="h-24" name="Sofia Chen" type="Root Canal" color="bg-blue-500" />}
-                                {dayIdx === 2 && <AppointmentEntry top="h-24 mt-48" height="h-48" name="Marcus V." type="Consultation" color="bg-primary" />}
-                                {dayIdx === 2 && <AppointmentEntry top="h-24 mt-[24rem]" height="h-24" name="Elena L." type="Orthodontics" color="bg-orange-500" />}
-                                {dayIdx === 4 && <AppointmentEntry top="mt-12" height="h-20" name="John Doe" type="Cleaning" color="bg-teal-500" />}
-                            </div>
+                    </div>
+                    <div className="grid grid-cols-7 gap-y-1 text-center">
+                        {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => (
+                            <span key={d} className="text-[8px] font-black text-slate-400 uppercase">{d}</span>
+                        ))}
+                        {[...Array(22)].map((_, i) => (
+                            <span key={i} className="text-[9px] font-bold text-slate-400 py-1">{i + 1}</span>
+                        ))}
+                        <span className="text-[9px] font-black bg-[#137fec] text-white rounded-full w-5 h-5 flex items-center justify-center mx-auto shadow-sm py-1">23</span>
+                        {[...Array(7)].map((_, i) => (
+                            <span key={i} className="text-[9px] font-bold text-slate-800 py-1">{i + 24}</span>
                         ))}
                     </div>
                 </div>
+
+                {/* Sala de Espera - Compacta */}
+                <div className="p-4 border-b border-slate-200">
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">SALA DE ESPERA</h3>
+                        <span className="text-[8px] font-black text-[#137fec] bg-blue-50 px-2 py-0.5 rounded-full">3 Pacientes</span>
+                    </div>
+                    <div className="space-y-2">
+                        <WaitingPatient name="Sarah Jenkins" type="Limpieza" time="09:45" color="bg-emerald-500" />
+                        <WaitingPatient name="Kevin Larsson" type="Cirugía" time="10:10" color="bg-violet-500" />
+                        <WaitingPatient name="Maria Garcia" type="Ortodoncia" time="10:15" color="bg-blue-500" />
+                    </div>
+                </div>
+
+                {/* Filtros - Compactos */}
+                <div className="p-4 space-y-4">
+                    <div>
+                        <h3 className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">DOCTORES</h3>
+                        <div className="space-y-2">
+                            <FilterItem label="Dr. Smith" color="bg-blue-400" checked />
+                            <FilterItem label="Dr. Garcia" color="bg-orange-400" checked />
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">TRATAMIENTOS</h3>
+                        <div className="space-y-2">
+                            <FilterItem label="Cirugía" color="bg-violet-500" checked />
+                            <FilterItem label="Limpieza" color="bg-emerald-500" checked />
+                            <FilterItem label="Urgencia" color="bg-red-500" checked />
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            {/* Calendario Principal (Derecha) - Fondo más oscuro para contraste */}
+            <div className="flex-1 flex flex-col min-h-0 bg-[#EBEBE6]">
+
+                {/* Cabecera del Calendario - Integrada */}
+                <header className="h-16 border-b border-slate-200 flex items-center justify-between px-6 bg-white/50 backdrop-blur-sm shrink-0">
+                    <div className="flex bg-slate-200/50 p-0.5 rounded-xl border border-slate-200">
+                        <button className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500">Día</button>
+                        <button className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest bg-white text-[#137fec] rounded-lg shadow-sm">Semana</button>
+                        <button className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-500">Mes</button>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <button className="p-1 text-slate-400"><ChevronLeft size={18} /></button>
+                        <span className="text-xs font-black italic tracking-tight text-slate-800">Octubre 23 - 29, 2023</span>
+                        <button className="p-1 text-slate-400"><ChevronRight size={18} /></button>
+                    </div>
+
+                    <button className="bg-[#137fec] hover:bg-blue-600 text-white px-6 py-2 rounded-xl font-black uppercase tracking-widest text-[9px] transition-all shadow-md shadow-blue-500/10 flex items-center gap-2">
+                        <Plus size={14} />
+                        Nueva Cita
+                    </button>
+                </header>
+
+                {/* Rejilla del Calendario */}
+                <div className="flex-1 overflow-auto bg-white/40 relative custom-scrollbar">
+                    <div className="min-w-[1000px]">
+                        {/* Cabecera de Días */}
+                        <div className="grid grid-cols-8 border-b border-slate-200 sticky top-0 bg-[#F4F4F0]/90 backdrop-blur-md z-30">
+                            <div className="p-3 border-r border-slate-200"></div>
+                            {[
+                                { day: 'LUN', date: '23' },
+                                { day: 'MAR', date: '24' },
+                                { day: 'MIÉ', date: '25' },
+                                { day: 'JUE', date: '26' },
+                                { day: 'VIE', date: '27' },
+                                { day: 'SÁB', date: '28' },
+                                { day: 'DOM', date: '29' }
+                            ].map((d, i) => (
+                                <div key={i} className="p-2 text-center border-r border-slate-200 last:border-0">
+                                    <span className="block text-[8px] font-black uppercase tracking-widest text-slate-400">{d.day}</span>
+                                    <span className={`text-xl font-black italic tracking-tighter ${d.date === '23' ? 'text-[#137fec]' : 'text-slate-700'}`}>{d.date}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Rejilla de Horas */}
+                        <div className="grid grid-cols-8 relative bg-white/20">
+
+                            {/* Línea de Hora Actual */}
+                            <div className="absolute top-[280px] left-0 right-0 z-20 pointer-events-none">
+                                <div className="h-[1.5px] w-full bg-red-400 opacity-60 relative">
+                                    <div className="absolute -left-1 -top-[3px] w-2 h-2 bg-red-400 rounded-full shadow-sm"></div>
+                                </div>
+                            </div>
+
+                            {/* Columna de Horas */}
+                            <div className="col-span-1 border-r border-slate-200 divide-y divide-slate-100">
+                                {[8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7].map(h => (
+                                    <div key={h} className="h-24 p-2 text-right text-[8px] font-black text-slate-400 tracking-tighter uppercase">
+                                        {h}:00 <span className="opacity-40">{h >= 8 && h < 12 ? 'AM' : 'PM'}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Columnas de Días */}
+                            {[...Array(7)].map((_, dayIdx) => (
+                                <div key={dayIdx} className="col-span-1 border-r border-slate-100 relative divide-y divide-slate-100/50">
+                                    {[...Array(12)].map((_, i) => <div key={i} className="h-24"></div>)}
+
+                                    {dayIdx === 0 && (
+                                        <>
+                                            <SimpleAppt top="top-[96px]" height="h-16" name="Alice Cooper" type="Limpieza" color="bg-emerald-50" border="border-emerald-400" textColor="text-emerald-700" />
+
+                                            {/* Cita Detalle Marcus - Más compacta */}
+                                            <div className="absolute left-1 right-1 top-[240px] bg-white rounded-xl border-2 border-blue-500 shadow-xl z-40 p-3 scale-90 origin-top">
+                                                <div className="flex items-start gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                                                        <img src="https://ui-avatars.com/api/?name=MV&background=F4F4F0&color=1E293B" alt="MV" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-[10px] font-black italic text-slate-800 truncate">Marcus Villanueva</h4>
+                                                        <span className="text-[7px] font-black uppercase text-violet-500 tracking-widest bg-violet-50 px-1.5 py-0.5 rounded">CIRUGÍA</span>
+                                                    </div>
+                                                </div>
+                                                <p className="mt-2 text-[8px] text-slate-500 font-medium leading-tight">Pieza #14 - Conducto</p>
+                                                <div className="flex gap-1.5 mt-3">
+                                                    <button className="flex-1 py-1.5 bg-slate-50 rounded-lg text-[7px] font-black uppercase text-slate-600 border border-slate-100"><ExternalLink size={10} className="inline mr-1" /> Ver</button>
+                                                    <button className="flex-1 py-1.5 bg-[#137fec] text-white rounded-lg text-[7px] font-black uppercase"><CheckCircle2 size={10} className="inline mr-1" /> Fin</button>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {dayIdx === 1 && (
+                                        <SimpleAppt top="top-[300px]" height="h-20" name="Urgencia" type="Dolor" color="bg-red-50" border="border-red-300" textColor="text-red-700" />
+                                    )}
+
+                                    {dayIdx === 2 && (
+                                        <SimpleAppt top="top-[96px]" height="h-12" name="James Wilson" type="Brackets" color="bg-blue-50" border="border-blue-400" textColor="text-blue-700" />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer - Compacto */}
+                <footer className="h-8 border-t border-slate-200 bg-[#F4F4F0] px-4 flex items-center justify-between text-[7px] font-black uppercase tracking-widest text-slate-400 shrink-0">
+                    <div className="flex gap-4">
+                        <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> 4 Limpiezas hoy</span>
+                        <span className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-violet-400"></div> 2 Cirugías hoy</span>
+                    </div>
+                    <span className="opacity-60 italic">Oct 23, 10:18 AM</span>
+                </footer>
             </div>
         </div>
     );
 };
 
-const AppointmentEntry: React.FC<{ top: string; height: string; name: string; type: string; color: string }> = ({ top, height, name, type, color }) => (
-    <div className={`absolute left-1 right-1 ${top} ${height} ${color} text-white p-3 rounded-2xl shadow-lg shadow-inner z-10 cursor-pointer hover:scale-[1.02] transition-all transform active:scale-95 group`}>
-        <div className="flex justify-between items-start">
-            <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-widest opacity-80">{type}</span>
-                <span className="text-xs font-black truncate">{name}</span>
+const WaitingPatient: React.FC<{ name: string; type: string; time: string; color: string }> = ({ name, type, time, color }) => (
+    <div className="p-2.5 bg-white rounded-xl border border-slate-100 flex justify-between items-center hover:shadow-md transition-all cursor-pointer">
+        <div className="flex items-center gap-2">
+            <div className={`w-1.5 h-1.5 rounded-full ${color}`}></div>
+            <div className="min-w-0">
+                <h4 className="text-[9px] font-black italic text-slate-800 truncate leading-none">{name}</h4>
+                <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">{type}</p>
             </div>
-            <MoreVertical size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
-        {height !== 'h-24' && (
-            <div className="mt-2 text-[9px] font-bold opacity-60 flex flex-col gap-1">
-                <span className="flex items-center gap-1"><Clock size={10} /> 10:30 - 12:00</span>
-                <span className="flex items-center gap-1"><MapPin size={10} /> Cabinet 1</span>
-            </div>
-        )}
+        <span className="text-[8px] font-black text-slate-300 shrink-0">{time}</span>
+    </div>
+);
+
+const FilterItem: React.FC<{ label: string; color: string; checked?: boolean }> = ({ label, color, checked }) => (
+    <label className="flex items-center justify-between cursor-pointer group">
+        <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${color} ${!checked && 'grayscale opacity-30'}`}></div>
+            <span className={`text-[9px] font-bold italic ${checked ? 'text-slate-700' : 'text-slate-300'}`}>{label}</span>
+        </div>
+        <div className={`w-3.5 h-3.5 rounded border transition-all ${checked ? 'bg-[#137fec] border-[#137fec]' : 'border-slate-200'}`}>
+            {checked && <div className="w-full h-full flex items-center justify-center text-white text-[8px] font-black opacity-80">✓</div>}
+        </div>
+    </label>
+);
+
+const SimpleAppt: React.FC<{ top: string; height: string; name: string; type: string; color: string; border: string; textColor: string }> = ({ top, height, name, type, color, border, textColor }) => (
+    <div className={`absolute left-1 right-1 ${top} ${height} ${color} border-l-[3px] ${border} rounded-lg p-2 flex flex-col justify-center cursor-pointer hover:shadow-md hover:z-10 transition-all`}>
+        <h5 className={`text-[8px] font-black italic tracking-tight ${textColor} truncate`}>{name}</h5>
+        {type && <p className="text-[7px] font-bold text-slate-400 mt-0.5 truncate leading-none">{type}</p>}
     </div>
 );
 

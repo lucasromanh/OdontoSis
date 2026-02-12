@@ -1,0 +1,4 @@
+﻿src/components/Patients.tsx(6,5): error TS6133: 'MoreVertical' is declared but its value is never read.
+src/components/Patients.tsx(13,5): error TS6133: 'ChevronRight' is declared but its value is never read.
+src/components/Patients.tsx(15,5): error TS6133: 'Eye' is declared but its value is never read.
+src/components/Patients.tsx(120,42): error TS2304: Cannot find name 'Microscope'.

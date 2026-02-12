@@ -1,101 +1,161 @@
-import React from 'react';
-import { Save, Printer, ArrowRightLeft, Microscope, Info, AlertTriangle, Settings as SettingsIcon } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Save, Printer, ArrowRightLeft, Microscope, Info, Settings as SettingsIcon } from 'lucide-react';
+
+// Constantes de dientes
+const UPPER_TEETH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 
 const Periodontogram: React.FC = () => {
+    // Estado para los valores clínicos
+    const [data, setData] = useState<{ [key: number]: { mg: string[], ps: string[] } }>(() => {
+        const initialState: any = {};
+        [...UPPER_TEETH, ...LOWER_TEETH].forEach(t => {
+            initialState[t] = { mg: ["0", "0", "0"], ps: ["2", "2", "2"] };
+        });
+        return initialState;
+    });
+
+    const updateValue = (tooth: number, type: 'mg' | 'ps', idx: number, val: string) => {
+        setData(prev => ({
+            ...prev,
+            [tooth]: {
+                ...prev[tooth],
+                [type]: prev[tooth][type].map((v, i) => i === idx ? val : v)
+            }
+        }));
+    };
+
+    // Función para calcular las rutas del gráfico
+    const calculatePaths = (teeth: number[]) => {
+        let mgPath = "";
+        let blPath = "";
+        teeth.forEach((t, i) => {
+            const toothData = data[t];
+            const segmentWidth = 1000 / teeth.length;
+            const startX = i * segmentWidth + (segmentWidth * 0.2);
+            const step = (segmentWidth * 0.6) / 2;
+
+            [0, 1, 2].forEach(pIdx => {
+                const x = startX + (pIdx * step);
+                const mg = parseFloat(toothData.mg[pIdx]) || 0;
+                const ps = parseFloat(toothData.ps[pIdx]) || 0;
+
+                // Mapeo visual: 100 es la base, 6px por unidad
+                const yMg = 100 + mg * 6;
+                const yBl = 100 + (mg + ps) * 6;
+
+                if (mgPath === "") mgPath = `M ${x},${yMg}`; else mgPath += ` L ${x},${yMg}`;
+                if (blPath === "") blPath = `M ${x},${yBl}`; else blPath += ` L ${x},${yBl}`;
+            });
+        });
+        return { mgPath, blPath };
+    };
+
+    const upperPaths = useMemo(() => calculatePaths(UPPER_TEETH), [data]);
+
     return (
-        <div className="p-6 space-y-6 animate-in slide-in-from-bottom-4 duration-700">
-            {/* Header Info */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-6">
-                    <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner">
-                        <Microscope size={28} />
+        <div className="p-6 space-y-6 animate-in slide-in-from-bottom-4 duration-700 bg-[#F4F4F0] min-h-[90vh]">
+            {/* Cabecera de Información */}
+            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-8">
+                    <div className="w-16 h-16 bg-[#137fec]/10 rounded-2xl flex items-center justify-center text-[#137fec] shadow-inner">
+                        <Microscope size={32} />
                     </div>
                     <div>
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-2xl font-bold">Maria Garcia</h2>
-                            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-bold text-slate-500 uppercase tracking-widest">ID: 2527851</span>
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-3xl font-black italic tracking-tighter text-slate-800 uppercase">Maria Garcia</h2>
+                            <span className="px-3 py-1 bg-slate-100 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200">ID: 2527851</span>
                         </div>
-                        <p className="text-slate-500 font-medium mt-1">Advanced Periodontogram • Last Updated: Feb 11, 2026</p>
+                        <p className="text-slate-500 font-medium mt-1 uppercase tracking-widest text-[10px] italic">Periodontograma Avanzado • <span className="text-[#137fec]">Actualizado: 11 de Feb, 2026</span></p>
                     </div>
                 </div>
-                <div className="flex gap-3">
-                    <ActionButton icon={<Printer size={18} />} label="Print" />
-                    <ActionButton icon={<ArrowRightLeft size={18} />} label="Compare" />
-                    <button className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2 active:scale-95">
+                <div className="flex gap-4">
+                    <ActionButton icon={<Printer size={18} />} label="Imprimir" />
+                    <ActionButton icon={<ArrowRightLeft size={18} />} label="Historial" />
+                    <button className="bg-[#137fec] hover:bg-blue-600 text-white px-10 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-blue-500/20 flex items-center gap-2 active:scale-95">
                         <Save size={18} />
-                        Save Analysis
+                        Guardar Análisis
                     </button>
                 </div>
             </div>
 
-            {/* Analysis Grid */}
+            {/* Cuadrícula de Análisis */}
             <div className="space-y-6">
-                {/* Upper Arch */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                    <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center gap-2">
-                        <div className="w-2 h-6 bg-primary rounded-full"></div>
-                        <h3 className="font-bold text-lg">Upper Arch Analysis</h3>
+                {/* Arcada Superior */}
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="px-8 py-5 border-b border-slate-100 bg-slate-50 flex items-center gap-3">
+                        <div className="w-2 h-7 bg-[#137fec] rounded-full shadow-lg shadow-blue-500/20"></div>
+                        <h3 className="font-black italic text-lg text-slate-800 uppercase tracking-tight">Análisis Arcada Superior</h3>
                     </div>
-                    <div className="overflow-x-auto p-6">
-                        <PeriodontalTable arch="Upper" teeth={[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28]} />
+                    <div className="overflow-x-auto p-8 custom-scrollbar">
+                        <PeriodontalTable teeth={UPPER_TEETH} data={data} onUpdate={updateValue} />
                     </div>
                 </div>
 
-                {/* Graphical Representation */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm relative overflow-hidden">
-                    <div className="absolute top-6 left-8 flex items-center gap-2">
-                        <Info size={18} className="text-slate-400" />
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Interactive Mapping</span>
+                {/* Representación Gráfica Interactiva */}
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 p-10 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-6 left-10 flex items-center gap-2 z-10">
+                        <Info size={18} className="text-[#137fec]" />
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Simulación Interactiva</span>
                     </div>
 
-                    <div className="h-64 mt-8 flex items-center justify-around relative">
-                        {/* Grid overlay */}
-                        <div className="absolute inset-0 grid grid-cols-16 opacity-[0.03] pointer-events-none">
+                    <div className="h-72 mt-8 flex items-center justify-around relative bg-[#F9F9F7] rounded-3xl border border-slate-100/50">
+                        {/* IMAGEN DE FONDO ESTIRADA A LO LARGO */}
+                        <img
+                            src="/src/tmp/dientes.jpeg"
+                            className="absolute inset-0 w-full h-full object-fill opacity-[0.15] pointer-events-none"
+                            alt="Ilustración Dental"
+                        />
+
+                        {/* Superposición de cuadrícula */}
+                        <div className="absolute inset-0 grid grid-cols-16 opacity-[0.05] pointer-events-none">
                             {[...Array(16)].map((_, i) => <div key={i} className="border-r border-slate-900 h-full"></div>)}
                         </div>
 
-                        {/* Tooth Visuals */}
-                        {[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28].map((t) => (
-                            <ToothGraphic key={t} number={t} status={t === 16 ? 'warning' : t === 26 ? 'implant' : 'normal'} />
-                        ))}
-
-                        {/* Spline Overlay (Mock SVG) */}
+                        {/* Rutas SVG Dinámicas */}
                         <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none" viewBox="0 0 1000 200">
-                            <path d="M 0,100 Q 100,110 200,120 T 400,110 T 600,115 T 800,105 T 1000,110" fill="transparent" stroke="#EF4444" strokeWidth="2" strokeDasharray="4 2" />
-                            <path d="M 0,140 Q 100,150 200,180 T 400,150 T 600,160 T 800,145 T 1000,155" fill="rgba(19, 127, 236, 0.05)" stroke="#137fec" strokeWidth="2" />
+                            <path d={upperPaths.mgPath} fill="transparent" stroke="#EF4444" strokeWidth="2.5" strokeDasharray="6 4" className="transition-all duration-300" />
+                            <path d={upperPaths.blPath} fill="rgba(19, 127, 236, 0.08)" stroke="#137fec" strokeWidth="3" className="transition-all duration-300" />
                         </svg>
+
+                        {/* Números de dientes sobre el gráfico */}
+                        <div className="absolute inset-0 flex justify-around items-end pb-4 px-6 pointer-events-none">
+                            {UPPER_TEETH.map(t => (
+                                <span key={t} className="text-[10px] font-black text-slate-300 italic">{t}</span>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="flex justify-center gap-8 mt-6">
-                        <LegendItem color="bg-red-500" label="Gingival Margin" />
-                        <LegendItem color="bg-primary" label="Bone Level" />
-                        <LegendItem color="bg-red-500/20" label="Pocket > 4mm" border="border border-red-500/50" />
-                        <LegendItem color="bg-slate-200" label="Implant" icon={<SettingsIcon size={10} />} />
+                    <div className="flex justify-center gap-10 mt-8 pt-6 border-t border-slate-50">
+                        <LegendItem color="bg-red-500" label="Margen Gingival" dashed />
+                        <LegendItem color="bg-[#137fec]" label="Nivel Óseo" />
+                        <LegendItem color="bg-red-500/10" label="Bolsa > 4mm" border="border border-red-400/30" />
+                        <LegendItem color="bg-slate-200" label="Implante" icon={<SettingsIcon size={12} className="text-slate-400" />} />
                     </div>
                 </div>
 
-                {/* Lower Arch */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                    <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center gap-2">
-                        <div className="w-2 h-6 bg-slate-400 rounded-full"></div>
-                        <h3 className="font-bold text-lg">Lower Arch Analysis</h3>
+                {/* Arcada Inferior */}
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="px-8 py-5 border-b border-slate-100 bg-slate-50 flex items-center gap-3">
+                        <div className="w-2 h-7 bg-slate-400 rounded-full"></div>
+                        <h3 className="font-black italic text-lg text-slate-800 uppercase tracking-tight">Análisis Arcada Inferior</h3>
                     </div>
-                    <div className="overflow-x-auto p-6">
-                        <PeriodontalTable arch="Lower" teeth={[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]} />
+                    <div className="overflow-x-auto p-8 custom-scrollbar">
+                        <PeriodontalTable teeth={LOWER_TEETH} data={data} onUpdate={updateValue} />
                     </div>
                 </div>
             </div>
 
-            {/* Summary Footer */}
-            <footer className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 flex items-center justify-between">
-                <div className="flex gap-8">
-                    <Metric label="Bleeding Index" value="12%" color="text-red-500" />
-                    <Metric label="Plaque Index" value="18%" color="text-primary" />
-                    <Metric label="Avg. Pocket Depth" value="2.8mm" color="text-slate-700" />
+            {/* Footer de Resumen */}
+            <footer className="bg-white rounded-3xl border border-slate-200 p-8 flex items-center justify-between shadow-sm">
+                <div className="flex gap-12">
+                    <Metric label="Índice de Sangrado" value="12%" color="text-red-500" />
+                    <Metric label="Índice de Placa" value="18%" color="text-[#137fec]" />
+                    <Metric label="Prof. Promedio" value="2.8mm" color="text-slate-700" />
                 </div>
-                <div className="flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                    <span className="flex items-center gap-1.5"><Save size={14} className="text-teal-500" /> Auto-saved: 14:02:45</span>
-                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">v4.2.1-stable</span>
+                <div className="flex items-center gap-6 text-[10px] font-black text-slate-300 uppercase tracking-widest italic">
+                    <span className="flex items-center gap-2"><Save size={16} className="text-teal-400" /> Auto-guardado: 14:02:45</span>
+                    <span className="px-4 py-1.5 bg-slate-50 rounded-full border border-slate-100">v4.2.1-PRO</span>
                 </div>
             </footer>
         </div>
@@ -103,82 +163,96 @@ const Periodontogram: React.FC = () => {
 };
 
 const ActionButton: React.FC<{ icon: React.ReactNode; label: string }> = ({ icon, label }) => (
-    <button className="px-5 py-3 text-sm font-bold border border-slate-200 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 active:scale-95">
+    <button className="px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all flex items-center gap-2 text-slate-400 hover:text-slate-700 active:scale-95">
         {icon} {label}
     </button>
 );
 
 const Metric: React.FC<{ label: string; value: string; color: string }> = ({ label, value, color }) => (
-    <div className="flex items-center gap-3">
-        <div className={`w-2 h-2 rounded-full ${color.replace('text', 'bg')}`}></div>
-        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{label}:</span>
-        <span className={`text-lg font-black ${color}`}>{value}</span>
-    </div>
-);
-
-const ToothGraphic: React.FC<{ number: number; status: 'normal' | 'warning' | 'implant' }> = ({ number, status }) => (
-    <div className="flex flex-col items-center">
-        <div className={`
-      w-10 h-16 rounded-b-xl relative mb-2 flex items-center justify-center transition-all cursor-pointer hover:scale-110
-      ${status === 'warning' ? 'bg-red-50 border-2 border-red-500 shadow-lg shadow-red-500/20' : ''}
-      ${status === 'implant' ? 'bg-slate-200 dark:bg-slate-700' : 'bg-slate-100 dark:bg-slate-800/50'}
-    `}>
-            {status === 'implant' && <SettingsIcon size={16} className="text-slate-400" />}
-            {status === 'warning' && <AlertTriangle size={16} className="text-red-500" />}
+    <div className="flex items-center gap-4">
+        <div className={`w-2.5 h-2.5 rounded-full ${color.replace('text', 'bg')} shadow-sm`}></div>
+        <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">{label}</span>
+            <span className={`text-xl font-black italic tracking-tighter ${color}`}>{value}</span>
         </div>
-        <span className={`text-[10px] font-bold ${status === 'warning' ? 'text-red-500' : 'text-slate-400'}`}>{number} {status === 'implant' ? '(IMP)' : ''}</span>
     </div>
 );
 
-const LegendItem: React.FC<{ color: string; label: string; border?: string; icon?: React.ReactNode }> = ({ color, label, border = '', icon }) => (
-    <div className="flex items-center gap-2">
-        <div className={`w-3 h-3 rounded-full ${color} ${border} flex items-center justify-center`}>{icon}</div>
-        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
+const LegendItem: React.FC<{ color: string; label: string; border?: string; icon?: React.ReactNode; dashed?: boolean }> = ({ color, label, border = '', icon, dashed }) => (
+    <div className="flex items-center gap-3">
+        <div className={`w-4 h-4 rounded shadow-sm ${color} ${border} flex items-center justify-center ${dashed ? 'border-2 border-white border-dashed ring-1 ring-red-500/30' : ''}`}>
+            {icon}
+        </div>
+        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">{label}</span>
     </div>
 );
 
-const PeriodontalTable: React.FC<{ arch: string, teeth: number[] }> = ({ teeth }) => (
-    <table className="w-full border-collapse">
+const PeriodontalTable: React.FC<{ teeth: number[]; data: any; onUpdate: any }> = ({ teeth, data, onUpdate }) => (
+    <table className="w-full border-separate border-spacing-0">
         <thead>
-            <tr className="bg-slate-50 dark:bg-slate-800/50">
-                <th className="p-3 text-left text-[10px] font-black uppercase text-slate-400 border-b border-slate-200 dark:border-slate-800 w-40">Parameter</th>
+            <tr className="bg-slate-50/50">
+                <th className="p-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 w-44 rounded-tl-3xl bg-slate-50/30">Métrica</th>
                 {teeth.map(t => (
-                    <th key={t} className={`p-2 text-center text-xs font-bold border-b border-slate-200 dark:border-slate-800 ${t === 16 || t === 46 ? 'text-primary' : 'text-slate-400'}`}>{t}</th>
+                    <th key={t} className={`p-2 text-center text-xs font-black italic border-b border-slate-100 ${t === 16 || t === 46 ? 'text-[#137fec] bg-blue-50/30' : 'text-slate-400'}`}>{t}</th>
                 ))}
             </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            <PeriodontalRow label="Movilidad" value="0" teeth={teeth.length} />
-            <PeriodontalRow label="Sangrado/Placa" type="dots" teeth={teeth.length} />
-            <PeriodontalRow label="Margen Gingival" type="triple" teeth={teeth.length} />
-            <PeriodontalRow label="Prof. Sondaje" type="triple" highlighted={true} teeth={teeth.length} />
+        <tbody className="divide-y divide-slate-100">
+            <PeriodontalRow label="Movilidad" teeth={teeth} />
+            <PeriodontalRow label="Sangrado/Placa" type="dots" teeth={teeth} />
+            <PeriodontalRow
+                label="Margen Gingival"
+                type="triple"
+                teeth={teeth}
+                values={teeth.map(t => data[t].mg)}
+                onUpdate={(tIdx: number, pIdx: number, val: string) => onUpdate(teeth[tIdx], 'mg', pIdx, val)}
+            />
+            <PeriodontalRow
+                label="Prof. Sondaje"
+                type="triple"
+                highlighted={true}
+                teeth={teeth}
+                values={teeth.map(t => data[t].ps)}
+                onUpdate={(tIdx: number, pIdx: number, val: string) => onUpdate(teeth[tIdx], 'ps', pIdx, val)}
+            />
         </tbody>
     </table>
 );
 
-const PeriodontalRow: React.FC<{ label: string; value?: string; type?: 'normal' | 'dots' | 'triple'; teeth: number; highlighted?: boolean }> = ({ label, type = 'normal', teeth, highlighted }) => (
-    <tr className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-        <td className="p-3 text-[10px] font-bold uppercase text-slate-500 bg-slate-50/30 dark:bg-slate-800/10 border-r border-slate-200 dark:border-slate-800">{label}</td>
-        {[...Array(teeth)].map((_, i) => (
-            <td key={i} className="p-0 text-center border-r border-slate-100 dark:border-slate-800">
-                {type === 'normal' && <input className="w-full h-8 text-center text-xs font-medium focus:bg-primary/5 outline-none" defaultValue="0" />}
+const PeriodontalRow: React.FC<{
+    label: string;
+    type?: 'normal' | 'dots' | 'triple';
+    teeth: number[];
+    highlighted?: boolean;
+    values?: string[][];
+    onUpdate?: (tIdx: number, pIdx: number, val: string) => void
+}> = ({ label, type = 'normal', teeth, highlighted, values, onUpdate }) => (
+    <tr className="hover:bg-slate-50/30 transition-all">
+        <td className="p-4 text-[9px] font-black uppercase text-slate-500 bg-slate-50/10 border-r border-slate-100 italic">{label}</td>
+        {teeth.map((_, tIdx) => (
+            <td key={tIdx} className={`p-0 text-center border-r border-slate-50 last:border-0 ${highlighted ? 'bg-red-50/5' : ''}`}>
+                {type === 'normal' && <input className="w-full h-10 text-center text-xs font-black italic focus:bg-[#137fec]/5 outline-none bg-transparent" defaultValue="0" />}
                 {type === 'dots' && (
-                    <div className="flex justify-center gap-1.5 py-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500/50"></div>
-                        <div className="w-2 h-2 rounded-full bg-primary/50"></div>
+                    <div className="flex justify-center gap-2 py-3">
+                        <div className="w-2 h-2 rounded-full bg-red-500/20 hover:bg-red-500 cursor-pointer transition-colors shadow-sm"></div>
+                        <div className="w-2 h-2 rounded-full bg-[#137fec]/20 hover:bg-[#137fec] cursor-pointer transition-colors shadow-sm"></div>
                     </div>
                 )}
-                {type === 'triple' && (
-                    <div className={`flex h-8 ${highlighted ? 'font-bold text-red-500' : ''}`}>
-                        <input className="w-1/3 h-full text-center text-[10px] border-none focus:bg-primary/5 outline-none" defaultValue="1" />
-                        <input className="w-1/3 h-full text-center text-[10px] border-x border-slate-100 dark:border-slate-800 focus:bg-primary/5 outline-none" defaultValue="2" />
-                        <input className="w-1/3 h-full text-center text-[10px] border-none focus:bg-primary/5 outline-none" defaultValue="1" />
+                {type === 'triple' && values && (
+                    <div className={`flex h-10 ${highlighted ? 'text-red-600' : ''}`}>
+                        {[0, 1, 2].map(pIdx => (
+                            <input
+                                key={pIdx}
+                                className={`w-1/3 h-full text-center text-[10px] border-none focus:bg-[#137fec]/5 outline-none bg-transparent font-black transition-colors ${highlighted && parseFloat(values[tIdx][pIdx]) >= 4 ? 'bg-red-100 text-red-700' : ''}`}
+                                value={values[tIdx][pIdx]}
+                                onChange={(e) => onUpdate?.(tIdx, pIdx, e.target.value)}
+                            />
+                        ))}
                     </div>
                 )}
             </td>
         ))}
     </tr>
 );
-
 
 export default Periodontogram;

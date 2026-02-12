@@ -1,0 +1,2 @@
+﻿src/components/Periodontogram.tsx(2,59): error TS6133: 'AlertTriangle' is declared but its value is never read.
+src/components/Periodontogram.tsx(228,21): error TS6133: 't' is declared but its value is never read.

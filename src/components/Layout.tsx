@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     LayoutDashboard,
     Users,
@@ -21,28 +21,28 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
     const [isSidebarOpen] = useState(true);
 
     const navItems = [
-        { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'patients', icon: Users, label: 'Patients' },
-        { id: 'appointments', icon: Calendar, label: 'Appointments' },
-        { id: 'financials', icon: CreditCard, label: 'Payments' },
-        { id: 'periodontogram', icon: Microscope, label: 'Periodontogram' },
-        { id: 'reports', icon: BarChart3, label: 'Reports' },
+        { id: 'dashboard', icon: LayoutDashboard, label: 'Panel Principal' },
+        { id: 'patients', icon: Users, label: 'Pacientes' },
+        { id: 'appointments', icon: Calendar, label: 'Agenda' },
+        { id: 'financials', icon: CreditCard, label: 'Pagos y Finanzas' },
+        { id: 'periodontogram', icon: Microscope, label: 'Periodontograma' },
+        { id: 'reports', icon: BarChart3, label: 'Reportes' },
     ];
 
     return (
-        <div className="flex h-screen w-full bg-[#F0F7FF] dark:bg-slate-950 overflow-hidden font-sans text-slate-900 dark:text-slate-100">
-            {/* Sidebar */}
-            <aside className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-30 ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
+        <div className="app-scale-wrapper flex h-full bg-[#F4F4F0] font-sans text-slate-800">
+            {/* Sidebar - Ahora con h-full real para que ocupe todo el alto escalado */}
+            <aside className={`bg-white border-r border-slate-200 transition-all duration-300 flex flex-col z-30 h-full ${isSidebarOpen ? 'w-64' : 'w-20'}`}>
                 <div className="p-6 flex items-center gap-3">
-                    <div className="min-w-[40px] h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                    <div className="min-w-[40px] h-10 bg-[#137fec] rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                         <Plus size={24} />
                     </div>
                     {isSidebarOpen && (
-                        <h1 className="font-bold text-xl tracking-tight text-primary">Dental Pro</h1>
+                        <h1 className="font-bold text-xl tracking-tight text-[#137fec]">Dental Pro</h1>
                     )}
                 </div>
 
-                <nav className="flex-1 px-4 space-y-2 mt-4">
+                <nav className="flex-1 px-4 space-y-1.5 mt-4">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = activeTab === item.id;
@@ -50,27 +50,37 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                             <button
                                 key={item.id}
                                 onClick={() => setActiveTab(item.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${isActive
-                                    ? 'bg-primary text-white shadow-lg shadow-primary/30 font-semibold'
-                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all group ${isActive
+                                    ? 'bg-[#137fec] text-white shadow-lg shadow-blue-500/30 font-semibold'
+                                    : 'text-slate-500 hover:bg-slate-50'
                                     }`}
                             >
-                                <Icon size={22} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-primary'} />
-                                {isSidebarOpen && <span>{item.label}</span>}
+                                <Icon size={20} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-[#137fec]'} />
+                                {isSidebarOpen && <span className="text-sm">{item.label}</span>}
                             </button>
                         );
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+                {isSidebarOpen && (
+                    <div className="p-4 mx-4 mb-4 bg-blue-50 rounded-2xl border border-blue-100">
+                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Mejorar Plan</p>
+                        <p className="text-[11px] text-slate-500 font-medium mb-3">Obtén más espacio para Rayos X</p>
+                        <button className="w-full py-2 bg-[#137fec] text-white text-xs font-bold rounded-xl hover:bg-blue-600 transition-colors shadow-sm">
+                            Ser Premium
+                        </button>
+                    </div>
+                )}
+
+                <div className="p-4 border-t border-slate-100">
                     <div className="flex items-center gap-3 px-2 py-2">
-                        <div className="min-w-[40px] h-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden ring-2 ring-primary/20">
-                            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQjw8AGQ4dRa6BgwvTfp0d_LOpBo-3VQUUzpCHia_ln0dR_4YsrSDi2ht5zVfMPOXHgNR7lBjCX4nfvcc9yANLme6kHArXogMflVJSQNVgZISV7MxnbPshv9RaKHh941Wnciqhw9rPMJVp6PEV63t3etiG1Eej2rHhieNszaISMAbofQ5V8KX6tjvVXmLNnhJOkhfIeFnbBNhsykgpun5yYyUEu-HUXIdb8Iyw4IwW8NZ_JO7mBaoQsQlAJyPkVqzHCYnTUB0G3xc" alt="User" />
+                        <div className="min-w-[40px] h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-blue-500/20 text-[10px] flex items-center justify-center font-bold text-slate-400">
+                            LR
                         </div>
                         {isSidebarOpen && (
                             <div className="flex-1 overflow-hidden">
                                 <p className="text-sm font-bold truncate">Dr. Lucas Román</p>
-                                <p className="text-xs text-slate-500 truncate">Orthodontist</p>
+                                <p className="text-[11px] text-slate-400 font-medium truncate">Administrador</p>
                             </div>
                         )}
                     </div>
@@ -78,38 +88,33 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
             </aside>
 
             {/* Content Area */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
                 {/* Header */}
-                <header className="h-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 z-20">
+                <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 flex items-center justify-between px-8 z-20">
                     <div className="flex-1 max-w-xl">
                         <div className="relative group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#137fec] transition-colors" size={18} />
                             <input
-                                className="w-full pl-12 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 border-none rounded-2xl ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary outline-none transition-all"
-                                placeholder="Search patients, records, or tools..."
+                                className="w-full pl-11 pr-4 py-2 bg-slate-50 border-none rounded-2xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none transition-all text-xs"
+                                placeholder="Buscar pacientes..."
                                 type="text"
                             />
                         </div>
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <button className="relative p-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
-                            <Bell size={22} />
-                            <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+                        <button className="relative p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all">
+                            <Bell size={20} />
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                         </button>
-                        <div className="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
-                        <button
-                            className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-2xl font-bold transition-all flex items-center gap-2 shadow-lg shadow-primary/20 active:scale-95"
-                            onClick={() => setActiveTab('patients')}
-                        >
-                            <Plus size={20} />
-                            New Patient
-                        </button>
+                        <div className="w-9 h-9 rounded-full bg-slate-100 ring-2 ring-blue-100 overflow-hidden">
+                            <img src="https://ui-avatars.com/api/?name=Lucas+Roman&background=137fec&color=fff" alt="User" />
+                        </div>
                     </div>
                 </header>
 
-                {/* Main View */}
-                <main className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/20">
+                {/* Main View - Asegurando que haga scroll correctamente dentrod del escalado */}
+                <main className="flex-1 overflow-y-auto bg-[#F4F4F0]/50 relative">
                     {children}
                 </main>
             </div>

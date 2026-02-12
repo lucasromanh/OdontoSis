@@ -1,0 +1,5 @@
+﻿src/components/Periodontogram.tsx(10,5): error TS6133: 'Plus' is declared but its value is never read.
+src/components/Periodontogram.tsx(11,5): error TS6133: 'Minus' is declared but its value is never read.
+src/components/Periodontogram.tsx(181,179): error TS6133: 'updateValue' is declared but its value is never read.
+src/components/Periodontogram.tsx(231,28): error TS6133: 'i' is declared but its value is never read.
+src/components/Periodontogram.tsx(253,11): error TS6133: 'isIncisor' is declared but its value is never read.
