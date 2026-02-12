@@ -3,12 +3,12 @@ import {
     ChevronLeft,
     ChevronRight,
     Plus,
+    ExternalLink,
+    CheckCircle2,
     X,
     Edit2,
     DollarSign,
-    Trash2,
-    Printer,
-    FileText
+    Trash2
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { ToastType } from './Notifications';
@@ -31,21 +31,6 @@ interface AppointmentsProps {
     addToast?: (msg: string, type: ToastType) => void;
 }
 
-// Lista de tratamientos disponibles
-const TREATMENTS = [
-    'Limpieza Dental',
-    'Cirugía',
-    'Urgencia',
-    'Ortodoncia',
-    'Endodoncia',
-    'Periodoncia',
-    'Implantes',
-    'Blanqueamiento',
-    'Extracción',
-    'Corona/Puente',
-    'Consulta General'
-];
-
 const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
     // Estado para las citas
     const [appointments, setAppointments] = useState<Appointment[]>(() => {
@@ -59,24 +44,10 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [showNewAppointmentModal, setShowNewAppointmentModal] = useState(false);
     const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
-    const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
-
-    // Filtros
-    const [filterTreatment, setFilterTreatment] = useState<string[]>(TREATMENTS);
 
     // Guardar citas en localStorage
     useEffect(() => {
         localStorage.setItem('appointments', JSON.stringify(appointments));
-    }, [appointments]);
-
-    // Actualizar selectedAppointment cuando appointments cambia
-    useEffect(() => {
-        if (selectedAppointment) {
-            const updated = appointments.find(apt => apt.id === selectedAppointment.id);
-            if (updated) {
-                setSelectedAppointment(updated);
-            }
-        }
     }, [appointments]);
 
     // Obtener la hora actual para la línea roja
@@ -123,13 +94,11 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
         ).sort((a, b) => a.startTime.localeCompare(b.startTime));
     }, [appointments]);
 
-    // Crear nueva cita y paciente si no existe
+    // Crear nueva cita
     const handleCreateAppointment = (appointmentData: Partial<Appointment>) => {
-        const patientId = Math.random().toString(36).substr(2, 9);
-
         const newAppointment: Appointment = {
             id: Math.random().toString(36).substr(2, 9),
-            patientId,
+            patientId: appointmentData.patientId || '',
             patientName: appointmentData.patientName || '',
             treatment: appointmentData.treatment || '',
             date: appointmentData.date || '',
@@ -141,58 +110,6 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
             paid: 0
         };
 
-        // Guardar paciente en localStorage si no existe
-        const patients = JSON.parse(localStorage.getItem('patients') || '[]');
-        const existingPatient = patients.find((p: any) =>
-            p.name?.toLowerCase() === appointmentData.patientName?.toLowerCase()
-        );
-
-        if (!existingPatient && appointmentData.patientName) {
-            const newPatient = {
-                id: patientId,
-                name: appointmentData.patientName,
-                phone: '',
-                email: '',
-                dateOfBirth: '',
-                age: 'N/A',
-                blood: 'O+',
-                allergy: 'Ninguna',
-                address: '',
-                medicalHistory: '',
-                lastVisit: new Date(appointmentData.date || new Date()).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }),
-                avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(appointmentData.patientName || '')}&background=137fec&color=fff&size=128`,
-                treatments: [{
-                    id: 1,
-                    treatment: appointmentData.treatment,
-                    date: appointmentData.date,
-                    cost: appointmentData.cost || 0,
-                    notes: appointmentData.notes || '',
-                    professional: "Dr. Lucas Román",
-                    status: "Completado"
-                }],
-                createdAt: new Date().toISOString()
-            };
-            patients.push(newPatient);
-            localStorage.setItem('patients', JSON.stringify(patients));
-            addToast?.(`Paciente "${appointmentData.patientName}" creado automáticamente`, 'success');
-            // Despachar evento para que Patients.tsx se entere
-            window.dispatchEvent(new CustomEvent('patientsUpdated'));
-        } else if (existingPatient) {
-            // Actualizar tratamientos del paciente existente
-            existingPatient.treatments = existingPatient.treatments || [];
-            existingPatient.treatments.push({
-                id: existingPatient.treatments.length + 1,
-                treatment: appointmentData.treatment,
-                date: appointmentData.date,
-                cost: appointmentData.cost || 0,
-                notes: appointmentData.notes || '',
-                professional: "Dr. Lucas Román",
-                status: "Completado"
-            });
-            existingPatient.lastVisit = new Date(appointmentData.date || new Date()).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-            localStorage.setItem('patients', JSON.stringify(patients));
-            newAppointment.patientId = existingPatient.id;
-        }
         setAppointments([...appointments, newAppointment]);
         setShowNewAppointmentModal(false);
         addToast?.('Cita creada exitosamente', 'success');
@@ -214,41 +131,18 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
         addToast?.('Cita eliminada', 'success');
     };
 
-    // Registrar pago y generar factura
+    // Registrar pago
     const handleRegisterPayment = (id: string, amount: number) => {
-        const appointment = appointments.find(apt => apt.id === id);
-        if (!appointment) return;
-
         setAppointments(appointments.map(apt =>
             apt.id === id ? { ...apt, paid: (apt.paid || 0) + amount } : apt
         ));
-
-        // Generar factura
-        const invoice = {
-            id: Math.random().toString(36).substr(2, 9),
-            appointmentId: id,
-            patientName: appointment.patientName,
-            treatment: appointment.treatment,
-            amount,
-            date: new Date().toISOString(),
-            paymentMethod: 'Efectivo'
-        };
-
-        // Guardar factura en localStorage
-        const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
-        invoices.push(invoice);
-        localStorage.setItem('invoices', JSON.stringify(invoices));
-
-        setSelectedInvoice(invoice);
-        addToast?.(`Pago de $${amount} registrado. Factura #${invoice.id.substr(0, 6)} generada`, 'success');
+        addToast?.(`Pago de $${amount} registrado`, 'success');
     };
 
     // Renderizar las citas en el calendario
     const renderAppointmentsForDay = (date: Date, dayIdx: number) => {
         const dateStr = date.toISOString().split('T')[0];
-        const dayAppointments = appointments.filter(apt =>
-            apt.date === dateStr && filterTreatment.includes(apt.treatment)
-        );
+        const dayAppointments = appointments.filter(apt => apt.date === dateStr);
 
         return dayAppointments.map((apt, idx) => {
             const [startHour, startMin] = apt.startTime.split(':').map(Number);
@@ -265,6 +159,38 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
             };
 
             const colors = statusColors[apt.status];
+
+            // Si es la primera cita del primer día, mostrar el detalle expandido
+            if (dayIdx === 0 && idx === 0 && selectedAppointment?.id === apt.id) {
+                return (
+                    <div key={apt.id} className="absolute left-1 right-1 bg-white rounded-xl border-2 border-blue-500 shadow-xl z-40 p-3 scale-90 origin-top" style={{ top: `${startPosition}px` }}>
+                        <div className="flex items-start gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                                <img src={`https://ui-avatars.com/api/?name=${apt.patientName}&background=F4F4F0&color=1E293B`} alt={apt.patientName} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-[10px] font-black italic text-slate-800 truncate">{apt.patientName}</h4>
+                                <span className="text-[7px] font-black uppercase text-violet-500 tracking-widest bg-violet-50 px-1.5 py-0.5 rounded">{apt.treatment}</span>
+                            </div>
+                        </div>
+                        <p className="mt-2 text-[8px] text-slate-500 font-medium leading-tight">{apt.notes || 'Sin notas'}</p>
+                        <div className="flex gap-1.5 mt-3">
+                            <button
+                                onClick={() => setSelectedAppointment(apt)}
+                                className="flex-1 py-1.5 bg-slate-50 rounded-lg text-[7px] font-black uppercase text-slate-600 border border-slate-100"
+                            >
+                                <ExternalLink size={10} className="inline mr-1" /> Ver
+                            </button>
+                            <button
+                                onClick={() => handleUpdateAppointment(apt.id, { status: 'completed' })}
+                                className="flex-1 py-1.5 bg-[#137fec] text-white rounded-lg text-[7px] font-black uppercase"
+                            >
+                                <CheckCircle2 size={10} className="inline mr-1" /> Fin
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
 
             return (
                 <div
@@ -326,29 +252,18 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
                 {/* Filtros - Compactos */}
                 <div className="p-4 space-y-4">
                     <div>
-                        <h3 className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">DOCTOR</h3>
+                        <h3 className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">DOCTORES</h3>
                         <div className="space-y-2">
-                            <FilterItem label="Dr. Principal" color="bg-blue-400" checked />
+                            <FilterItem label="Dr. Smith" color="bg-blue-400" checked />
+                            <FilterItem label="Dr. Garcia" color="bg-orange-400" checked />
                         </div>
                     </div>
                     <div>
                         <h3 className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3">TRATAMIENTOS</h3>
-                        <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
-                            {TREATMENTS.map(treatment => (
-                                <FilterItem
-                                    key={treatment}
-                                    label={treatment}
-                                    color="bg-violet-500"
-                                    checked={filterTreatment.includes(treatment)}
-                                    onChange={(checked) => {
-                                        if (checked) {
-                                            setFilterTreatment([...filterTreatment, treatment]);
-                                        } else {
-                                            setFilterTreatment(filterTreatment.filter(t => t !== treatment));
-                                        }
-                                    }}
-                                />
-                            ))}
+                        <div className="space-y-2">
+                            <FilterItem label="Cirugía" color="bg-violet-500" checked />
+                            <FilterItem label="Limpieza" color="bg-emerald-500" checked />
+                            <FilterItem label="Urgencia" color="bg-red-500" checked />
                         </div>
                     </div>
                 </div>
@@ -458,7 +373,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
 
                             {/* Columna de Horas */}
                             <div className="col-span-1 border-r border-slate-200">
-                                {[8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7].map((h) => (
+                                {[8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7].map((h, idx) => (
                                     <div key={h} className="h-24 p-2 text-right text-[8px] font-black text-slate-400 tracking-tighter uppercase border-b border-slate-100">
                                         {h}:00 <span className="opacity-40">{h >= 8 && h < 12 ? 'AM' : 'PM'}</span>
                                     </div>
@@ -550,7 +465,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
                 document.body
             )}
 
-            {/* Modal: Detalle de Cita - CON ACTUALIZACIÓN EN TIEMPO REAL */}
+            {/* Modal: Detalle de Cita - MÁS COMPACTO */}
             {selectedAppointment && createPortal(
                 <AppointmentDetailModal
                     appointment={selectedAppointment}
@@ -559,15 +474,6 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
                     onDelete={handleDeleteAppointment}
                     onUpdateStatus={(status) => handleUpdateAppointment(selectedAppointment.id, { status })}
                     onRegisterPayment={(amount) => handleRegisterPayment(selectedAppointment.id, amount)}
-                />,
-                document.body
-            )}
-
-            {/* Modal: Factura */}
-            {selectedInvoice && createPortal(
-                <InvoiceModal
-                    invoice={selectedInvoice}
-                    onClose={() => setSelectedInvoice(null)}
                 />,
                 document.body
             )}
@@ -718,27 +624,19 @@ const WaitingPatient: React.FC<{
     );
 };
 
-const FilterItem: React.FC<{
-    label: string;
-    color: string;
-    checked?: boolean;
-    onChange?: (checked: boolean) => void;
-}> = ({ label, color, checked, onChange }) => (
+const FilterItem: React.FC<{ label: string; color: string; checked?: boolean }> = ({ label, color, checked }) => (
     <label className="flex items-center justify-between cursor-pointer group">
         <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${color} ${!checked && 'grayscale opacity-30'}`}></div>
             <span className={`text-[9px] font-bold italic ${checked ? 'text-slate-700' : 'text-slate-300'}`}>{label}</span>
         </div>
-        <div
-            onClick={() => onChange?.(!checked)}
-            className={`w-3.5 h-3.5 rounded border transition-all ${checked ? 'bg-[#137fec] border-[#137fec]' : 'border-slate-200'}`}
-        >
+        <div className={`w-3.5 h-3.5 rounded border transition-all ${checked ? 'bg-[#137fec] border-[#137fec]' : 'border-slate-200'}`}>
             {checked && <div className="w-full h-full flex items-center justify-center text-white text-[8px] font-black opacity-80">✓</div>}
         </div>
     </label>
 );
 
-// Modal: Nueva Cita - CON SELECTOR DE TRATAMIENTO
+// Modal: Nueva Cita - MÁS COMPACTO
 const NewAppointmentModal: React.FC<{
     selectedDate: Date | null;
     onClose: () => void;
@@ -746,7 +644,7 @@ const NewAppointmentModal: React.FC<{
 }> = ({ selectedDate, onClose, onCreate }) => {
     const [formData, setFormData] = useState({
         patientName: '',
-        treatment: TREATMENTS[0],
+        treatment: '',
         date: selectedDate?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
         startTime: '09:00',
         endTime: '10:00',
@@ -771,6 +669,7 @@ const NewAppointmentModal: React.FC<{
         };
     }, []);
 
+
     const handleSubmit = () => {
         if (!formData.patientName || !formData.treatment) {
             alert('Completa los campos requeridos');
@@ -793,23 +692,22 @@ const NewAppointmentModal: React.FC<{
                 </div>
 
                 <div className="space-y-3">
-                    <input
-                        type="text"
-                        value={formData.patientName}
-                        onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none text-xs font-bold"
-                        placeholder="Nombre del Paciente"
-                    />
-
-                    <select
-                        value={formData.treatment}
-                        onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none text-xs font-bold"
-                    >
-                        {TREATMENTS.map(treatment => (
-                            <option key={treatment} value={treatment}>{treatment}</option>
-                        ))}
-                    </select>
+                    <div className="grid grid-cols-2 gap-3">
+                        <input
+                            type="text"
+                            value={formData.patientName}
+                            onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
+                            className="px-4 py-2.5 bg-slate-50 border-none rounded-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none text-xs font-bold"
+                            placeholder="Nombre del Paciente"
+                        />
+                        <input
+                            type="text"
+                            value={formData.treatment}
+                            onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
+                            className="px-4 py-2.5 bg-slate-50 border-none rounded-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none text-xs font-bold"
+                            placeholder="Tratamiento"
+                        />
+                    </div>
 
                     <div className="grid grid-cols-3 gap-2">
                         <input
@@ -867,7 +765,7 @@ const NewAppointmentModal: React.FC<{
     );
 };
 
-// Modal: Detalle de Cita - CON ACTUALIZACIÓN EN TIEMPO REAL
+// Modal: Detalle de Cita - MÁS COMPACTO
 const AppointmentDetailModal: React.FC<{
     appointment: Appointment;
     onClose: () => void;
@@ -875,30 +773,15 @@ const AppointmentDetailModal: React.FC<{
     onDelete: (id: string) => void;
     onUpdateStatus: (status: Appointment['status']) => void;
     onRegisterPayment: (amount: number) => void;
-}> = ({ appointment: initialAppointment, onClose, onEdit, onDelete, onUpdateStatus, onRegisterPayment }) => {
+}> = ({ appointment, onClose, onEdit, onDelete, onUpdateStatus, onRegisterPayment }) => {
     const [paymentAmount, setPaymentAmount] = useState('');
     const [showPaymentInput, setShowPaymentInput] = useState(false);
-    const [appointment, setAppointment] = useState(initialAppointment);
-
-    // Actualizar en tiempo real cuando cambia el appointment
-    React.useEffect(() => {
-        setAppointment(initialAppointment);
-    }, [initialAppointment]);
 
     const statusLabels = {
         'pending': 'Pendiente',
         'in-progress': 'En Proceso',
         'completed': 'Completado',
         'cancelled': 'Cancelado'
-    };
-
-    const handlePayment = () => {
-        const amount = parseFloat(paymentAmount);
-        if (amount > 0) {
-            onRegisterPayment(amount);
-            setPaymentAmount('');
-            setShowPaymentInput(false);
-        }
     };
 
     return (
@@ -934,10 +817,7 @@ const AppointmentDetailModal: React.FC<{
                             {(['pending', 'in-progress', 'completed', 'cancelled'] as const).map(status => (
                                 <button
                                     key={status}
-                                    onClick={() => {
-                                        onUpdateStatus(status);
-                                        setAppointment({ ...appointment, status });
-                                    }}
+                                    onClick={() => onUpdateStatus(status)}
                                     className={`py-1.5 rounded-lg text-[7px] font-black uppercase transition-all ${appointment.status === status
                                         ? 'bg-[#137fec] text-white'
                                         : 'bg-white text-slate-400 border border-slate-200'
@@ -984,7 +864,14 @@ const AppointmentDetailModal: React.FC<{
                                         className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none"
                                     />
                                     <button
-                                        onClick={handlePayment}
+                                        onClick={() => {
+                                            const amount = parseFloat(paymentAmount);
+                                            if (amount > 0) {
+                                                onRegisterPayment(amount);
+                                                setPaymentAmount('');
+                                                setShowPaymentInput(false);
+                                            }
+                                        }}
                                         className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-[8px] font-black uppercase"
                                     >
                                         OK
@@ -1025,7 +912,7 @@ const AppointmentDetailModal: React.FC<{
     );
 };
 
-// Modal: Editar Cita - CON SELECTOR DE TRATAMIENTO
+// Modal: Editar Cita - MÁS COMPACTO
 const EditAppointmentModal: React.FC<{
     appointment: Appointment;
     onClose: () => void;
@@ -1052,22 +939,20 @@ const EditAppointmentModal: React.FC<{
                 </div>
 
                 <div className="space-y-3">
-                    <input
-                        type="text"
-                        value={formData.patientName}
-                        onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none text-xs font-bold"
-                    />
-
-                    <select
-                        value={formData.treatment}
-                        onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-50 border-none rounded-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none text-xs font-bold"
-                    >
-                        {TREATMENTS.map(treatment => (
-                            <option key={treatment} value={treatment}>{treatment}</option>
-                        ))}
-                    </select>
+                    <div className="grid grid-cols-2 gap-3">
+                        <input
+                            type="text"
+                            value={formData.patientName}
+                            onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
+                            className="px-4 py-2.5 bg-slate-50 border-none rounded-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none text-xs font-bold"
+                        />
+                        <input
+                            type="text"
+                            value={formData.treatment}
+                            onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
+                            className="px-4 py-2.5 bg-slate-50 border-none rounded-xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none text-xs font-bold"
+                        />
+                    </div>
 
                     <div className="grid grid-cols-3 gap-2">
                         <input
@@ -1120,85 +1005,6 @@ const EditAppointmentModal: React.FC<{
                     >
                         Guardar
                     </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Modal: Factura (Invoice)
-const InvoiceModal: React.FC<{
-    invoice: any;
-    onClose: () => void;
-}> = ({ invoice, onClose }) => {
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl p-8 space-y-6 animate-in zoom-in-95 duration-300 relative overflow-hidden">
-                {/* Decoración */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-16 -mt-16 opacity-50"></div>
-
-                <div className="flex justify-between items-start relative">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#137fec] rounded-xl flex items-center justify-center text-white">
-                            <FileText size={20} />
-                        </div>
-                        <div>
-                            <h4 className="text-lg font-black italic text-slate-800 uppercase leading-none">Factura</h4>
-                            <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mt-1">Nº {invoice.id.toUpperCase().substr(0, 8)}</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors">
-                        <X size={20} />
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-8 py-6 border-y border-slate-100">
-                    <div className="space-y-4">
-                        <div>
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Paciente</p>
-                            <p className="text-sm font-black italic text-slate-800">{invoice.patientName}</p>
-                        </div>
-                        <div>
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tratamiento</p>
-                            <p className="text-xs font-bold text-slate-600">{invoice.treatment}</p>
-                        </div>
-                    </div>
-                    <div className="space-y-4 text-right">
-                        <div>
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Fecha</p>
-                            <p className="text-xs font-bold text-slate-800">{new Date(invoice.date).toLocaleDateString()}</p>
-                        </div>
-                        <div>
-                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Método de Pago</p>
-                            <p className="text-xs font-bold text-slate-800">{invoice.paymentMethod}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-slate-50 rounded-2xl p-6">
-                    <div className="flex justify-between items-center">
-                        <span className="text-xs font-black uppercase text-slate-500 tracking-widest">Total Pagado</span>
-                        <span className="text-2xl font-black italic text-[#137fec]">${invoice.amount}</span>
-                    </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                    <button
-                        onClick={() => window.print()}
-                        className="flex-1 py-3 bg-slate-100 rounded-xl text-[10px] font-black uppercase text-slate-600 flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors"
-                    >
-                        <Printer size={16} /> Imprimir
-                    </button>
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-3 bg-[#137fec] rounded-xl text-[10px] font-black uppercase text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-colors"
-                    >
-                        Continuar
-                    </button>
-                </div>
-
-                <div className="text-center">
-                    <p className="text-[8px] font-bold text-slate-300 uppercase tracking-[0.2em]">Gracias por confiar en nosotros</p>
                 </div>
             </div>
         </div>

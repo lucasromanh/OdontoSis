@@ -1,29 +1,109 @@
 import React, { useState, useMemo } from 'react';
-import { Save, Printer, ArrowRightLeft, Microscope, Info, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Printer, ArrowRightLeft, Microscope, Info, Settings as SettingsIcon, X, Trash2, Check } from 'lucide-react';
+import { ToastType } from './Notifications';
 
 // Constantes de dientes
 const UPPER_TEETH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 
-const Periodontogram: React.FC = () => {
+const Periodontogram: React.FC<{
+    patientName?: string;
+    patientId?: string;
+    initialData?: any;
+    onDataChange?: (newData: any) => void;
+    addToast?: (msg: string, type: ToastType) => void
+}> = ({ patientName = "Maria Garcia", patientId = "ID: 2527851", initialData, onDataChange, addToast }) => {
     // Estado para los valores clínicos
-    const [data, setData] = useState<{ [key: number]: { mg: string[], ps: string[] } }>(() => {
+    const [data, setData] = useState<{ [key: number]: { mg: string[], ps: string[], movilidad: string, sangrado: boolean[], placa: boolean[] } }>(() => {
+        if (initialData && Object.keys(initialData).length > 0) return initialData;
+
         const initialState: any = {};
         [...UPPER_TEETH, ...LOWER_TEETH].forEach(t => {
-            initialState[t] = { mg: ["0", "0", "0"], ps: ["2", "2", "2"] };
+            initialState[t] = {
+                mg: ["0", "0", "0"],
+                ps: ["2", "2", "2"],
+                movilidad: "0",
+                sangrado: [false, false, false],
+                placa: [false, false, false]
+            };
         });
         return initialState;
     });
 
-    const updateValue = (tooth: number, type: 'mg' | 'ps', idx: number, val: string) => {
-        setData(prev => ({
-            ...prev,
-            [tooth]: {
-                ...prev[tooth],
-                [type]: prev[tooth][type].map((v, i) => i === idx ? val : v)
+    // Sincronizar con datos externos si cambian
+    React.useEffect(() => {
+        if (initialData && Object.keys(initialData).length > 0) {
+            setData(initialData);
+        } else {
+            // Si no hay datos, inicializamos el estado por defecto
+            const initialState: any = {};
+            [...UPPER_TEETH, ...LOWER_TEETH].forEach(t => {
+                initialState[t] = {
+                    mg: ["0", "0", "0"],
+                    ps: ["2", "2", "2"],
+                    movilidad: "0",
+                    sangrado: [false, false, false],
+                    placa: [false, false, false]
+                };
+            });
+            setData(initialState);
+        }
+    }, [initialData]);
+
+    const [history, setHistory] = useState([
+        { id: 1, date: "10 Ene, 2026", professional: "Dr. Lucas Román", indices: { sangrado: "15%", placa: "20%" } },
+        { id: 2, date: "15 Dic, 2025", professional: "Dra. Ana López", indices: { sangrado: "22%", placa: "35%" } }
+    ]);
+    const [showHistory, setShowHistory] = useState(false);
+    const [confirmingSave, setConfirmingSave] = useState(false);
+    const [deletingEntryId, setDeletingEntryId] = useState<number | null>(null);
+
+    const updateValue = (tooth: number, type: 'mg' | 'ps' | 'movilidad' | 'sangrado' | 'placa', idx: number | null, val: any) => {
+        setData(prev => {
+            const toothData = prev[tooth];
+            let newValue;
+
+            if (idx !== null && Array.isArray(toothData[type as 'mg' | 'ps' | 'sangrado' | 'placa'])) {
+                newValue = (toothData[type as 'mg' | 'ps' | 'sangrado' | 'placa'] as any[]).map((v, i) => i === idx ? val : v);
+            } else {
+                newValue = val;
             }
-        }));
+
+            const newState = {
+                ...prev,
+                [tooth]: {
+                    ...toothData,
+                    [type]: newValue
+                }
+            };
+            onDataChange?.(newState);
+            return newState;
+        });
     };
+
+    // Cálculos dinámicos
+    const metrics = useMemo(() => {
+        const totalSites = [...UPPER_TEETH, ...LOWER_TEETH].length * 3;
+        let bleedingCount = 0;
+        let plaqueCount = 0;
+        let psSum = 0;
+        let psCount = 0;
+
+        [...UPPER_TEETH, ...LOWER_TEETH].forEach(t => {
+            data[t].sangrado.forEach(v => { if (v) bleedingCount++; });
+            data[t].placa.forEach(v => { if (v) plaqueCount++; });
+            data[t].ps.forEach(v => {
+                psSum += parseFloat(v) || 0;
+                psCount++;
+            });
+        });
+
+        return {
+            sangrado: ((bleedingCount / totalSites) * 100).toFixed(1) + "%",
+            placa: ((plaqueCount / totalSites) * 100).toFixed(1) + "%",
+            psPromedio: (psSum / psCount).toFixed(1) + "mm"
+        };
+    }, [data]);
 
     // Función para calcular las rutas del gráfico
     const calculatePaths = (teeth: number[]) => {
@@ -44,8 +124,8 @@ const Periodontogram: React.FC = () => {
                 const yMg = 100 + mg * 6;
                 const yBl = 100 + (mg + ps) * 6;
 
-                if (mgPath === "") mgPath = `M ${x},${yMg}`; else mgPath += ` L ${x},${yMg}`;
-                if (blPath === "") blPath = `M ${x},${yBl}`; else blPath += ` L ${x},${yBl}`;
+                if (mgPath === "") mgPath = `M ${x},${yMg} `; else mgPath += ` L ${x},${yMg} `;
+                if (blPath === "") blPath = `M ${x},${yBl} `; else blPath += ` L ${x},${yBl} `;
             });
         });
         return { mgPath, blPath };
@@ -63,21 +143,140 @@ const Periodontogram: React.FC = () => {
                     </div>
                     <div>
                         <div className="flex items-center gap-4">
-                            <h2 className="text-3xl font-black italic tracking-tighter text-slate-800 uppercase">Maria Garcia</h2>
-                            <span className="px-3 py-1 bg-slate-100 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200">ID: 2527851</span>
+                            <h2 className="text-3xl font-black italic tracking-tighter text-slate-800 uppercase">{patientName}</h2>
+                            <span className="px-3 py-1 bg-slate-100 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-200">{patientId}</span>
                         </div>
                         <p className="text-slate-500 font-medium mt-1 uppercase tracking-widest text-[10px] italic">Periodontograma Avanzado • <span className="text-[#137fec]">Actualizado: 11 de Feb, 2026</span></p>
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <ActionButton icon={<Printer size={18} />} label="Imprimir" />
-                    <ActionButton icon={<ArrowRightLeft size={18} />} label="Historial" />
-                    <button className="bg-[#137fec] hover:bg-blue-600 text-white px-10 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-blue-500/20 flex items-center gap-2 active:scale-95">
+                    <ActionButton
+                        icon={<Printer size={18} />}
+                        label="Imprimir"
+                        onClick={() => window.print()}
+                    />
+                    <ActionButton
+                        icon={<ArrowRightLeft size={18} />}
+                        label="Historial"
+                        onClick={() => setShowHistory(true)}
+                    />
+                    <button
+                        onClick={() => setConfirmingSave(true)}
+                        className="bg-[#137fec] hover:bg-blue-600 text-white px-10 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] transition-all shadow-xl shadow-blue-500/20 flex items-center gap-2 active:scale-95"
+                    >
                         <Save size={18} />
                         Guardar Análisis
                     </button>
                 </div>
             </div>
+
+            {/* Modal de Confirmación de Guardado */}
+            {confirmingSave && (
+                <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[3rem] w-full max-w-sm shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-300 text-center scale-[0.85]">
+                        <div className="w-20 h-20 bg-blue-50 text-[#137fec] rounded-full flex items-center justify-center mx-auto">
+                            <Save size={40} />
+                        </div>
+                        <div className="space-y-2">
+                            <h4 className="text-xl font-black italic tracking-tighter text-slate-800 uppercase">¿Guardar Análisis Actual?</h4>
+                            <p className="text-[11px] font-bold text-slate-400 uppercase leading-relaxed">
+                                Se registrará el estado actual del periodontograma en el historial del paciente.
+                            </p>
+                        </div>
+                        <div className="flex gap-4 pt-4">
+                            <button
+                                onClick={() => setConfirmingSave(false)}
+                                className="flex-1 py-4 bg-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const newEntry = {
+                                        id: Date.now(),
+                                        date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
+                                        professional: "Dr. Lucas Román",
+                                        indices: { sangrado: metrics.sangrado, placa: metrics.placa }
+                                    };
+                                    setHistory([newEntry, ...history]);
+                                    setConfirmingSave(false);
+                                    addToast?.("Análisis guardado correctamente", "success");
+                                }}
+                                className="flex-1 py-4 bg-[#137fec] rounded-2xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all"
+                            >
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Historial */}
+            {showHistory && (
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[3rem] w-full max-w-md shadow-2xl p-10 space-y-8 animate-in zoom-in-95 duration-300 scale-[0.85]">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-6">
+                            <h4 className="text-xl font-black italic tracking-tighter text-slate-800 uppercase text-center w-full ml-6">Historial de Análisis</h4>
+                            <button onClick={() => setShowHistory(false)} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-xl text-slate-400">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                            {history.map(entry => (
+                                <div key={entry.id} className="p-5 bg-slate-50 rounded-3xl border border-slate-100 hover:border-[#137fec]/20 transition-all group flex justify-between items-center relative overflow-hidden">
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-black text-slate-800 uppercase tracking-tighter">{entry.date}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{entry.professional}</p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black text-red-400 uppercase">S: {entry.indices.sangrado}</p>
+                                            <p className="text-[10px] font-black text-[#137fec] uppercase">P: {entry.indices.placa}</p>
+                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeletingEntryId(entry.id);
+                                            }}
+                                            className="p-2 bg-red-50 text-red-400 rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+
+                                    {/* Confirmation Overlay for Deletion within the item */}
+                                    {deletingEntryId === entry.id && (
+                                        <div className="absolute inset-0 bg-red-500 flex items-center justify-around px-4 animate-in fade-in zoom-in-95 duration-200">
+                                            <p className="text-[10px] font-black text-white uppercase italic">¿Confirmar Borrado?</p>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => setDeletingEntryId(null)}
+                                                    className="p-2 bg-white/20 hover:bg-white/40 text-white rounded-lg transition-all"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setHistory(prev => prev.filter(h => h.id !== entry.id));
+                                                        setDeletingEntryId(null);
+                                                        addToast?.("Análisis eliminado", "success");
+                                                    }}
+                                                    className="p-2 bg-white text-red-500 rounded-lg transition-all shadow-lg"
+                                                >
+                                                    <Check size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={() => setShowHistory(false)} className="w-full py-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-slate-500/20 active:scale-95 transition-all">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Cuadrícula de Análisis */}
             <div className="space-y-6">
@@ -149,9 +348,9 @@ const Periodontogram: React.FC = () => {
             {/* Footer de Resumen */}
             <footer className="bg-white rounded-3xl border border-slate-200 p-8 flex items-center justify-between shadow-sm">
                 <div className="flex gap-12">
-                    <Metric label="Índice de Sangrado" value="12%" color="text-red-500" />
-                    <Metric label="Índice de Placa" value="18%" color="text-[#137fec]" />
-                    <Metric label="Prof. Promedio" value="2.8mm" color="text-slate-700" />
+                    <Metric label="Índice de Sangrado" value={metrics.sangrado} color="text-red-500" />
+                    <Metric label="Índice de Placa" value={metrics.placa} color="text-[#137fec]" />
+                    <Metric label="Prof. Promedio" value={metrics.psPromedio} color="text-slate-700" />
                 </div>
                 <div className="flex items-center gap-6 text-[10px] font-black text-slate-300 uppercase tracking-widest italic">
                     <span className="flex items-center gap-2"><Save size={16} className="text-teal-400" /> Auto-guardado: 14:02:45</span>
@@ -162,15 +361,18 @@ const Periodontogram: React.FC = () => {
     );
 };
 
-const ActionButton: React.FC<{ icon: React.ReactNode; label: string }> = ({ icon, label }) => (
-    <button className="px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all flex items-center gap-2 text-slate-400 hover:text-slate-700 active:scale-95">
+const ActionButton: React.FC<{ icon: React.ReactNode; label: string; onClick?: () => void }> = ({ icon, label, onClick }) => (
+    <button
+        onClick={onClick}
+        className="px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all flex items-center gap-2 text-slate-400 hover:text-slate-700 active:scale-95"
+    >
         {icon} {label}
     </button>
 );
 
 const Metric: React.FC<{ label: string; value: string; color: string }> = ({ label, value, color }) => (
     <div className="flex items-center gap-4">
-        <div className={`w-2.5 h-2.5 rounded-full ${color.replace('text', 'bg')} shadow-sm`}></div>
+        <div className={`w-2.5 h-2.5 rounded-full ${color.replace('text-', 'bg-')} shadow-sm`}></div>
         <div className="flex flex-col">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">{label}</span>
             <span className={`text-xl font-black italic tracking-tighter ${color}`}>{value}</span>
@@ -198,8 +400,23 @@ const PeriodontalTable: React.FC<{ teeth: number[]; data: any; onUpdate: any }> 
             </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-            <PeriodontalRow label="Movilidad" teeth={teeth} />
-            <PeriodontalRow label="Sangrado/Placa" type="dots" teeth={teeth} />
+            <PeriodontalRow
+                label="Movilidad"
+                teeth={teeth}
+                type="normal"
+                values={teeth.map(t => [data[t].movilidad])}
+                onUpdate={(tIdx: number, _: number, val: string) => onUpdate(teeth[tIdx], 'movilidad', null, val)}
+            />
+            <PeriodontalRow
+                label="Sangrado/Placa"
+                type="dots"
+                teeth={teeth}
+                values={teeth.map(t => [data[t].sangrado, data[t].placa]) as any}
+                onUpdate={(tIdx: number, pIdx: number, type: 'sangrado' | 'placa') => {
+                    const currentVal = data[teeth[tIdx]][type][pIdx];
+                    onUpdate(teeth[tIdx], type, pIdx, !currentVal);
+                }}
+            />
             <PeriodontalRow
                 label="Margen Gingival"
                 type="triple"
@@ -224,18 +441,34 @@ const PeriodontalRow: React.FC<{
     type?: 'normal' | 'dots' | 'triple';
     teeth: number[];
     highlighted?: boolean;
-    values?: string[][];
-    onUpdate?: (tIdx: number, pIdx: number, val: string) => void
+    values?: any[][];
+    onUpdate?: (tIdx: number, pIdx: number, val: any) => void
 }> = ({ label, type = 'normal', teeth, highlighted, values, onUpdate }) => (
     <tr className="hover:bg-slate-50/30 transition-all">
         <td className="p-4 text-[9px] font-black uppercase text-slate-500 bg-slate-50/10 border-r border-slate-100 italic">{label}</td>
         {teeth.map((_, tIdx) => (
             <td key={tIdx} className={`p-0 text-center border-r border-slate-50 last:border-0 ${highlighted ? 'bg-red-50/5' : ''}`}>
-                {type === 'normal' && <input className="w-full h-10 text-center text-xs font-black italic focus:bg-[#137fec]/5 outline-none bg-transparent" defaultValue="0" />}
-                {type === 'dots' && (
+                {type === 'normal' && values && (
+                    <input
+                        className="w-full h-10 text-center text-xs font-black italic focus:bg-[#137fec]/5 outline-none bg-transparent"
+                        value={values[tIdx][0]}
+                        onChange={(e) => onUpdate?.(tIdx, 0, e.target.value)}
+                    />
+                )}
+                {type === 'dots' && values && (
                     <div className="flex justify-center gap-2 py-3">
-                        <div className="w-2 h-2 rounded-full bg-red-500/20 hover:bg-red-500 cursor-pointer transition-colors shadow-sm"></div>
-                        <div className="w-2 h-2 rounded-full bg-[#137fec]/20 hover:bg-[#137fec] cursor-pointer transition-colors shadow-sm"></div>
+                        {[0, 1, 2].map(pIdx => (
+                            <div key={pIdx} className="flex flex-col gap-1">
+                                <div
+                                    onClick={() => onUpdate?.(tIdx, pIdx, 'sangrado')}
+                                    className={`w-2.5 h-2.5 rounded-full cursor-pointer transition-all shadow-sm ${((values[tIdx] as any)[0][pIdx]) ? 'bg-red-500 scale-125' : 'bg-red-500/20 hover:bg-red-500/40'}`}
+                                ></div>
+                                <div
+                                    onClick={() => onUpdate?.(tIdx, pIdx, 'placa')}
+                                    className={`w-2.5 h-2.5 rounded-full cursor-pointer transition-all shadow-sm ${((values[tIdx] as any)[1][pIdx]) ? 'bg-[#137fec] scale-125' : 'bg-[#137fec]/20 hover:bg-[#137fec]/40'}`}
+                                ></div>
+                            </div>
+                        ))}
                     </div>
                 )}
                 {type === 'triple' && values && (

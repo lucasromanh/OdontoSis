@@ -1,1 +1,4 @@
-﻿src/components/Appointments.tsx(8,5): error TS6133: 'Users' is declared but its value is never read.
+﻿src/components/Budgets.tsx(5,83): error TS6133: 'addToast' is declared but its value is never read.
+src/components/Documents.tsx(5,85): error TS6133: 'addToast' is declared but its value is never read.
+src/components/Odontogram.tsx(5,86): error TS6133: 'addToast' is declared but its value is never read.
+src/components/Timeline.tsx(5,84): error TS6133: 'addToast' is declared but its value is never read.

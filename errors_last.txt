@@ -1,0 +1,2 @@
+﻿src/components/Patients.tsx(10,14): error TS6133: 'ImageIcon' is declared but its value is never read.
+src/components/Patients.tsx(11,5): error TS6133: 'DollarSign' is declared but its value is never read.

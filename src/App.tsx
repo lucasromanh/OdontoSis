@@ -4,23 +4,33 @@ import Dashboard from './components/Dashboard';
 import Patients from './components/Patients';
 import Appointments from './components/Appointments';
 import Financials from './components/Financials';
-import Periodontogram from './components/Periodontogram';
 
 function App() {
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const [activeTab, setActiveTab] = useState('patients');
+    const [searchValue, setSearchValue] = useState("");
+    const [requestedSubTab, setRequestedSubTab] = useState<string | null>(null);
 
     const renderContent = () => {
         switch (activeTab) {
             case 'dashboard':
                 return <Dashboard />;
             case 'patients':
-                return <Patients />;
+                return (
+                    <Patients
+                        externalSearch={searchValue}
+                        onExternalSearchChange={setSearchValue}
+                        forcedSubTab={requestedSubTab}
+                        onForcedSubTabHandled={() => setRequestedSubTab(null)}
+                    />
+                );
             case 'appointments':
                 return <Appointments />;
             case 'financials':
                 return <Financials />;
             case 'periodontogram':
-                return <Periodontogram />;
+                // This case is actually handled by the onSearchChange/setActiveTab logic now
+                // but we keep it for safety or redirect
+                return null;
             case 'reports':
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4">
@@ -36,7 +46,26 @@ function App() {
     };
 
     return (
-        <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+        <Layout
+            activeTab={activeTab === 'patients' && requestedSubTab === 'Periodontograma' ? 'periodontogram' : activeTab}
+            setActiveTab={(tab) => {
+                if (tab === 'periodontogram') {
+                    setActiveTab('patients');
+                    setRequestedSubTab('Periodontograma');
+                } else {
+                    setActiveTab(tab);
+                    setRequestedSubTab(null);
+                }
+            }}
+            searchValue={searchValue}
+            onSearchChange={(v) => {
+                setSearchValue(v);
+                if (activeTab !== 'patients' && v.length > 0) {
+                    setActiveTab('patients');
+                    setRequestedSubTab(null);
+                }
+            }}
+        >
             {renderContent()}
         </Layout>
     );

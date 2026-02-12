@@ -15,9 +15,11 @@ interface LayoutProps {
     children: React.ReactNode;
     activeTab: string;
     setActiveTab: (tab: string) => void;
+    searchValue?: string;
+    onSearchChange?: (value: string) => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, searchValue, onSearchChange }) => {
     const [isSidebarOpen] = useState(true);
 
     const navItems = [
@@ -98,6 +100,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
                                 className="w-full pl-11 pr-4 py-2 bg-slate-50 border-none rounded-2xl ring-1 ring-slate-200 focus:ring-2 focus:ring-[#137fec] outline-none transition-all text-xs"
                                 placeholder="Buscar pacientes..."
                                 type="text"
+                                value={searchValue}
+                                onChange={(e) => onSearchChange?.(e.target.value)}
                             />
                         </div>
                     </div>
