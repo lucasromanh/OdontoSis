@@ -196,6 +196,15 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
         setAppointments([...appointments, newAppointment]);
         setShowNewAppointmentModal(false);
         addToast?.('Cita creada exitosamente', 'success');
+
+        // Notificación de sistema
+        window.dispatchEvent(new CustomEvent('app_notification', {
+            detail: {
+                title: 'Nueva cita agendada',
+                description: `${newAppointment.patientName} - ${newAppointment.startTime}`,
+                type: 'appointment'
+            }
+        }));
     };
 
     // Actualizar cita
@@ -208,10 +217,21 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
 
     // Eliminar cita
     const handleDeleteAppointment = (id: string) => {
+        const aptToDelete = appointments.find(a => a.id === id);
         setAppointments(appointments.filter(apt => apt.id !== id));
         setSelectedAppointment(null);
         setEditingAppointment(null);
         addToast?.('Cita eliminada', 'success');
+
+        if (aptToDelete) {
+            window.dispatchEvent(new CustomEvent('app_notification', {
+                detail: {
+                    title: 'Cita cancelada',
+                    description: `Se eliminó el turno de ${aptToDelete.patientName}`,
+                    type: 'cancel'
+                }
+            }));
+        }
     };
 
     // Registrar pago y generar factura
@@ -241,18 +261,27 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
 
         setSelectedInvoice(invoice);
         addToast?.(`Pago de $${amount} registrado. Factura #${invoice.id.substr(0, 6)} generada`, 'success');
+
+        // Notificación de sistema
+        window.dispatchEvent(new CustomEvent('app_notification', {
+            detail: {
+                title: 'Pago registrado',
+                description: `Recibo #${invoice.id.substr(0, 6)} por $${amount} (${appointment.patientName})`,
+                type: 'payment'
+            }
+        }));
     };
 
     // Renderizar las citas en el calendario
-    const renderAppointmentsForDay = (date: Date, dayIdx: number) => {
+    const renderAppointmentsForDay = (date: Date) => {
         const dateStr = date.toISOString().split('T')[0];
         const dayAppointments = appointments.filter(apt =>
             apt.date === dateStr && filterTreatment.includes(apt.treatment)
         );
 
-        return dayAppointments.map((apt, idx) => {
-            const [startHour, startMin] = apt.startTime.split(':').map(Number);
-            const [endHour, endMin] = apt.endTime.split(':').map(Number);
+        return dayAppointments.map(appointment => {
+            const [startHour, startMin] = appointment.startTime.split(':').map(Number);
+            const [endHour, endMin] = appointment.endTime.split(':').map(Number);
 
             const startPosition = ((startHour - 8) * 96) + ((startMin / 60) * 96);
             const duration = ((endHour - startHour) * 96) + (((endMin - startMin) / 60) * 96);
@@ -264,20 +293,20 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
                 'cancelled': { bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-500' }
             };
 
-            const colors = statusColors[apt.status];
+            const colors = statusColors[appointment.status as keyof typeof statusColors];
 
             return (
                 <div
-                    key={apt.id}
+                    key={appointment.id}
                     className={`absolute left-1 right-1 ${colors.bg} border-l-[3px] ${colors.border} rounded-lg p-2 cursor-pointer hover:shadow-md hover:z-10 transition-all`}
                     style={{ top: `${startPosition}px`, height: `${duration}px` }}
-                    onClick={() => setSelectedAppointment(apt)}
+                    onClick={() => setSelectedAppointment(appointment)}
                 >
                     <h5 className={`text-[8px] font-black italic tracking-tight ${colors.text} truncate`}>
-                        {apt.patientName}
+                        {appointment.patientName}
                     </h5>
                     <p className="text-[7px] font-bold text-slate-400 mt-0.5 truncate leading-none">
-                        {apt.treatment}
+                        {appointment.treatment}
                     </p>
                 </div>
             );
@@ -512,7 +541,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ addToast }) => {
                                         </div>
                                     ))}
                                     {/* Renderizar citas sobre las celdas */}
-                                    {renderAppointmentsForDay(date, dayIdx)}
+                                    {renderAppointmentsForDay(date)}
                                 </div>
                             ))}
                         </div>

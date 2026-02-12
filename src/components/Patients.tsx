@@ -74,7 +74,21 @@ const Patients: React.FC<{
     onExternalSearchChange?: (val: string) => void;
     forcedSubTab?: string | null;
     onForcedSubTabHandled?: () => void;
-}> = ({ externalSearch, onExternalSearchChange, forcedSubTab, onForcedSubTabHandled }) => {
+    addToast?: (msg: string, type: ToastType) => void;
+}> = ({ externalSearch, onExternalSearchChange, forcedSubTab, onForcedSubTabHandled, addToast: externalAddToast }) => {
+    // Toast state (internal fallback if not provided)
+    const [localToasts, setLocalToasts] = useState<any[]>([]);
+    const addToast = (message: string, type: ToastType) => {
+        if (externalAddToast) {
+            externalAddToast(message, type);
+        } else {
+            const id = Math.random().toString(36).substr(2, 9);
+            setLocalToasts(prev => [...prev, { id, message, type }]);
+        }
+    };
+    const removeToast = (id: string) => {
+        setLocalToasts(prev => prev.filter(t => t.id !== id));
+    };
     // Cargar pacientes desde localStorage al inicio
     const [patients, setPatients] = useState(() => {
         const stored = localStorage.getItem('patients');
@@ -259,15 +273,7 @@ const Patients: React.FC<{
         cost: ""
     });
 
-    // Toast state
-    const [toasts, setToasts] = useState<any[]>([]);
-    const addToast = (message: string, type: ToastType) => {
-        const id = Math.random().toString(36).substr(2, 9);
-        setToasts(prev => [...prev, { id, message, type }]);
-    };
-    const removeToast = (id: string) => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-    };
+
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -399,7 +405,8 @@ const Patients: React.FC<{
 
     return (
         <div className="p-8 h-full space-y-8 animate-in fade-in duration-500 bg-[#F4F4F0]/30 overflow-y-auto relative">
-            <ToastContainer toasts={toasts} removeToast={removeToast} />
+            {/* Render local ToastContainer only if external addToast is not provided */}
+            {!externalAddToast && <ToastContainer toasts={localToasts} removeToast={removeToast} />}
 
             <input
                 type="file"

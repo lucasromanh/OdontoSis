@@ -1,19 +1,50 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Layout } from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Patients from './components/Patients';
 import Appointments from './components/Appointments';
 import Financials from './components/Financials';
+import { ToastContainer, ToastType } from './components/Notifications';
+import { Login } from './components/Login';
 
 function App() {
-    const [activeTab, setActiveTab] = useState('patients');
+    const [activeTab, setActiveTab] = useState('dashboard');
     const [searchValue, setSearchValue] = useState("");
     const [requestedSubTab, setRequestedSubTab] = useState<string | null>(null);
+    const [toasts, setToasts] = useState<any[]>([]);
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        return localStorage.getItem('isLoggedIn') === 'true';
+    });
+
+    const handleLogin = () => {
+        setIsLoggedIn(true);
+        localStorage.setItem('isLoggedIn', 'true');
+    };
+
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        localStorage.removeItem('isLoggedIn');
+    };
+
+    const addToast = useCallback((message: string, type: ToastType) => {
+        const id = Math.random().toString(36).substr(2, 9);
+        setToasts(prev => [...prev, { id, message, type }]);
+    }, []);
+
+    const removeToast = useCallback((id: string) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+    }, []);
 
     const renderContent = () => {
         switch (activeTab) {
             case 'dashboard':
-                return <Dashboard />;
+                return (
+                    <Dashboard
+                        setActiveTab={setActiveTab}
+                        onSearchChange={setSearchValue}
+                        addToast={addToast}
+                    />
+                );
             case 'patients':
                 return (
                     <Patients
@@ -21,15 +52,14 @@ function App() {
                         onExternalSearchChange={setSearchValue}
                         forcedSubTab={requestedSubTab}
                         onForcedSubTabHandled={() => setRequestedSubTab(null)}
+                        addToast={addToast}
                     />
                 );
             case 'appointments':
-                return <Appointments />;
+                return <Appointments addToast={addToast} />;
             case 'financials':
                 return <Financials />;
             case 'periodontogram':
-                // This case is actually handled by the onSearchChange/setActiveTab logic now
-                // but we keep it for safety or redirect
                 return null;
             case 'reports':
                 return (
@@ -41,33 +71,54 @@ function App() {
                     </div>
                 );
             default:
-                return <Dashboard />;
+                return (
+                    <Dashboard
+                        setActiveTab={setActiveTab}
+                        onSearchChange={setSearchValue}
+                        addToast={addToast}
+                    />
+                );
         }
     };
 
+    if (!isLoggedIn) {
+        return (
+            <>
+                <Login onLogin={handleLogin} />
+                <ToastContainer toasts={toasts} removeToast={removeToast} />
+            </>
+        );
+    }
+
     return (
-        <Layout
-            activeTab={activeTab === 'patients' && requestedSubTab === 'Periodontograma' ? 'periodontogram' : activeTab}
-            setActiveTab={(tab) => {
-                if (tab === 'periodontogram') {
-                    setActiveTab('patients');
-                    setRequestedSubTab('Periodontograma');
-                } else {
-                    setActiveTab(tab);
-                    setRequestedSubTab(null);
-                }
-            }}
-            searchValue={searchValue}
-            onSearchChange={(v) => {
-                setSearchValue(v);
-                if (activeTab !== 'patients' && v.length > 0) {
-                    setActiveTab('patients');
-                    setRequestedSubTab(null);
-                }
-            }}
-        >
-            {renderContent()}
-        </Layout>
+        <>
+            <Layout
+                activeTab={activeTab === 'patients' && requestedSubTab === 'Periodontograma' ? 'periodontogram' : activeTab}
+                setActiveTab={(tab) => {
+                    if (tab === 'logout') {
+                        handleLogout();
+                    } else if (tab === 'periodontogram') {
+                        setActiveTab('patients');
+                        setRequestedSubTab('Periodontograma');
+                    } else {
+                        setActiveTab(tab);
+                        setRequestedSubTab(null);
+                    }
+                }}
+                searchValue={searchValue}
+                onSearchChange={(v) => {
+                    setSearchValue(v);
+                    if (activeTab !== 'patients' && v.length > 0) {
+                        setActiveTab('patients');
+                        setRequestedSubTab(null);
+                    }
+                }}
+                addToast={addToast}
+            >
+                {renderContent()}
+            </Layout>
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
+        </>
     );
 }
 
